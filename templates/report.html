@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WCL Report Comparison</title>
+    <style>
+      /* Styles are similar to index.html for a consistent look */
+      body {
+        font-family: sans-serif;
+        background-color: #2c2f33;
+        color: #f0f0f0;
+        margin: 20px;
+      }
+      .container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+      }
+      .report-card {
+        background-color: #40444b;
+        border: 1px solid #54585e;
+        border-radius: 8px;
+        padding: 15px;
+        flex: 1 1 45%;
+        min-width: 400px;
+        box-sizing: border-box;
+      }
+      h1,
+      h2 {
+        color: #ffffff;
+        border-bottom: 2px solid #7289da;
+        padding-bottom: 5px;
+      }
+      h1 {
+        font-size: 2em;
+        text-align: center;
+      }
+      h2 {
+        font-size: 1.5em;
+        margin-top: 0;
+      }
+      p {
+        color: #b9bbbe;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        table-layout: fixed;
+      }
+      th,
+      td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #54585e;
+        word-wrap: break-word;
+      }
+      th {
+        background-color: #36393f;
+      }
+      tr:nth-child(even) {
+        background-color: #4a4e55;
+      }
+      .boss {
+        font-weight: bold;
+      }
+      .wipe {
+        color: #e74c3c;
+        font-style: italic;
+      }
+      .trash {
+        color: #99aab5;
+      }
+      .delta-positive {
+        color: #e74c3c;
+      }
+      .delta-negative {
+        color: #2ecc71;
+      }
+      .summary-row {
+        font-weight: bold;
+        background-color: #36393f;
+      }
+
+      @media (max-width: 800px) {
+        .report-card {
+          flex-basis: 100%;
+          min-width: 0;
+        }
+        th,
+        td {
+          padding: 8px 3px;
+          font-size: 0.8em;
+          white-space: normal;
+        }
+        table col {
+          width: 13%;
+        }
+        table col.name-col {
+          width: 22%;
+        }
+        h1 {
+          font-size: 1.5em;
+        }
+        h2 {
+          font-size: 1.2em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Combat Log Analysis</h1>
+    <div class="container">
+      {% if data1 %}
+      <div class="report-card">
+        <h2>{{ data1.title }}</h2>
+        <p>{{ data1.zone }} - {{ data1.date }}</p>
+        <table>
+          <tbody>
+            {% set total_idle = namespace(value=0) %} {% for fight in
+            data1.fights %} {% set total_idle.value = total_idle.value +
+            fight.idle_time %}
+            <tr
+              class="{% if fight.is_boss %}boss{% else %}trash{% endif %}{% if fight.is_boss and not fight.is_kill %} wipe{% endif %}"
+            >
+              <td>{{ fight.name }}</td>
+              <td>{{ format_timestamp(fight.idle_time) }}</td>
+              <td>{{ format_timestamp(fight.start_time_rel) }}</td>
+              <td>{{ format_timestamp(fight.duration) }}</td>
+              <td>{{ format_timestamp(fight.end_time_rel) }}</td>
+              <td>
+                {{ format_timestamp(fight.wing_time) if fight.wing_time else ''
+                }}
+              </td>
+              {% if data2 %}
+              <td>
+                {% if fight.delta is defined %}
+                <span
+                  class="{% if fight.delta >= 0 %}delta-positive{% else %}delta-negative{% endif %}"
+                >
+                  {% if fight.delta >= 0 %}+{% endif %}{{
+                  format_timestamp(fight.delta, include_hours=False) }}
+                </span>
+                {% elif fight.is_boss %} &mdash; {% endif %}
+              </td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+            <tr class="summary-row">
+              <td colspan="2">
+                Total Idle Time: {{ format_timestamp(total_idle.value) }}
+              </td>
+              <td colspan="{{ 4 if data2 else 3 }}">
+                Total Run Time: {{ format_timestamp(data1.total_duration) }}
+              </td>
+              {% if data2 %}
+              <td></td>
+              {% endif %}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {% endif %} {% if data2 %}
+      <div class="report-card"></div>
+      {% endif %}
+    </div>
+  </body>
+</html>
