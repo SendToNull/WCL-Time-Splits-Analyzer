@@ -165,10 +165,22 @@
       /* Delta time colors for comparison */
       .delta-positive {
         color: #e74c3c;
+        font-weight: bold;
       } /* Red for slower */
       .delta-negative {
         color: #2ecc71;
+        font-weight: bold;
       } /* Green for faster */
+      
+      /* Highlight significant deltas */
+      .delta-significant {
+        background-color: rgba(231, 76, 60, 0.1);
+        padding: 2px 4px;
+        border-radius: 3px;
+      }
+      .delta-significant.delta-negative {
+        background-color: rgba(46, 204, 113, 0.1);
+      }
 
       .summary-row {
         font-weight: bold;
@@ -242,12 +254,19 @@
       <form id="report-form">
         <div class="report-group">
           <label for="report_id1">Report ID 1:</label><br />
-          <input type="text" id="report_id1" name="report_id1" required />
+          <input type="text" id="report_id1" name="report_id1" required 
+                 placeholder="e.g., xkTQz4GyjJ6XFbhw or full URL" />
+          <small style="display: block; color: #99aab5; margin-top: 5px;">
+            Enter report ID or paste full WarcraftLogs URL
+          </small>
         </div>
         <div class="report-group">
-          <label for="report_id2">Report ID 2 (Optional for comparison):</label
-          ><br />
-          <input type="text" id="report_id2" name="report_id2" />
+          <label for="report_id2">Report ID 2 (Optional for comparison):</label><br />
+          <input type="text" id="report_id2" name="report_id2" 
+                 placeholder="e.g., WqaDLpJjXzM9ymfK or full URL" />
+          <small style="display: block; color: #99aab5; margin-top: 5px;">
+            Enter second report for side-by-side comparison
+          </small>
         </div>
         <div class="toggle-group">
           <input type="checkbox" id="show-trash" name="show-trash" checked />
@@ -311,12 +330,47 @@
         }
       };
 
+      /**
+       * Extracts report ID from a WarcraftLogs URL or returns the input if it's already an ID
+       * @param {string} input - URL or report ID
+       * @returns {string} - Extracted report ID
+       */
+      function extractReportId(input) {
+        if (!input) return "";
+        
+        // Check if it's already a report ID (alphanumeric, typically 16 characters)
+        if (/^[a-zA-Z0-9]{10,20}$/.test(input.trim())) {
+          return input.trim();
+        }
+        
+        // Extract from URL patterns like:
+        // https://classic.warcraftlogs.com/reports/xkTQz4GyjJ6XFbhw
+        // https://fresh.warcraftlogs.com/reports/WqaDLpJjXzM9ymfK
+        const urlMatch = input.match(/\/reports\/([a-zA-Z0-9]+)/);
+        if (urlMatch) {
+          return urlMatch[1];
+        }
+        
+        // If no pattern matches, return the input as-is
+        return input.trim();
+      }
+
       // Main event listener for form submission
       form.addEventListener("submit", function (event) {
         event.preventDefault(); // Prevent default form submission
         loadingIndicator.style.display = "flex";
         resultsContainer.innerHTML = ""; // Clear previous results
-        const formData = new FormData(form);
+        
+        // Extract report IDs from URLs if needed
+        const reportId1 = extractReportId(document.getElementById("report_id1").value);
+        const reportId2 = extractReportId(document.getElementById("report_id2").value);
+        
+        // Create form data with extracted IDs
+        const formData = new FormData();
+        formData.append("report_id1", reportId1);
+        if (reportId2) {
+          formData.append("report_id2", reportId2);
+        }
 
         // Use the Fetch API to send data to the backend
         fetch("/report", { method: "POST", body: formData })

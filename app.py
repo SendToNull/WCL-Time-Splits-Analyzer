@@ -94,27 +94,59 @@ def get_wcl_data(report_id, api_key):
     Returns:
         dict: The JSON response from the API as a dictionary, or an error dictionary.
     """
+    if not report_id or not report_id.strip():
+        return {"error": "Report ID cannot be empty"}
+    
+    report_id = report_id.strip()
+    
+    # Validate report ID format (alphanumeric, typically 16 characters)
+    if not report_id.replace('-', '').replace('_', '').isalnum():
+        return {"error": f"Invalid report ID format: {report_id}"}
+    
     # Try classic.warcraftlogs.com first, then fall back to fresh.warcraftlogs.com
     # This order prioritizes the original/classic endpoint which has been around longer
     endpoints = [
-        f"https://classic.warcraftlogs.com:443/v1/report/fights/{report_id}?translate=true&api_key={api_key}",
-        f"https://fresh.warcraftlogs.com:443/v1/report/fights/{report_id}?translate=true&api_key={api_key}"
+        ("classic", f"https://classic.warcraftlogs.com:443/v1/report/fights/{report_id}?translate=true&api_key={api_key}"),
+        ("fresh", f"https://fresh.warcraftlogs.com:443/v1/report/fights/{report_id}?translate=true&api_key={api_key}")
     ]
     
-    for url in endpoints:
+    last_error = None
+    for endpoint_name, url in endpoints:
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=30)  # Add timeout
             response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
             data = response.json()
+            
             # Check if we got valid data (not an error response)
             if not data.get("error") and data.get("fights"):
-                print(f"Successfully fetched report {report_id} from {url}")
+                print(f"Successfully fetched report {report_id} from {endpoint_name}.warcraftlogs.com")
                 return data
+            elif data.get("error"):
+                last_error = data["error"]
+                print(f"API error from {endpoint_name}.warcraftlogs.com: {last_error}")
+            else:
+                print(f"No fights data from {endpoint_name}.warcraftlogs.com")
+                
+        except requests.exceptions.Timeout:
+            last_error = f"Request timeout for {endpoint_name}.warcraftlogs.com"
+            print(last_error)
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                last_error = f"Report not found on {endpoint_name}.warcraftlogs.com"
+            elif e.response.status_code == 401:
+                last_error = "Invalid API key or insufficient permissions"
+            else:
+                last_error = f"HTTP {e.response.status_code} error from {endpoint_name}.warcraftlogs.com"
+            print(last_error)
         except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
-            print(f"Error fetching/decoding for report {report_id} from {url}: {e}")
-            continue
+            last_error = f"Network/parsing error from {endpoint_name}.warcraftlogs.com: {str(e)}"
+            print(last_error)
     
-    return {"error": f"Failed to fetch data from both classic.warcraftlogs.com and fresh.warcraftlogs.com for report {report_id}"}
+    # Return the most specific error message
+    if last_error:
+        return {"error": last_error}
+    else:
+        return {"error": f"Report {report_id} not found on any WarcraftLogs endpoint"}
 
 
 def find_raid_zone_times(report_data):
