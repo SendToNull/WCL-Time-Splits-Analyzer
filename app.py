@@ -94,14 +94,27 @@ def get_wcl_data(report_id, api_key):
     Returns:
         dict: The JSON response from the API as a dictionary, or an error dictionary.
     """
-    url = f"https://classic.warcraftlogs.com:443/v1/report/fights/{report_id}?translate=true&api_key={api_key}"
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
-        return response.json()
-    except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
-        print(f"Error fetching/decoding for report {report_id}: {e}")
-        return {"error": f"Failed to fetch or decode data from WCL API: {e}"}
+    # Try classic.warcraftlogs.com first, then fall back to fresh.warcraftlogs.com
+    # This order prioritizes the original/classic endpoint which has been around longer
+    endpoints = [
+        f"https://classic.warcraftlogs.com:443/v1/report/fights/{report_id}?translate=true&api_key={api_key}",
+        f"https://fresh.warcraftlogs.com:443/v1/report/fights/{report_id}?translate=true&api_key={api_key}"
+    ]
+    
+    for url in endpoints:
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # Raises an HTTPError for bad responses (4xx or 5xx)
+            data = response.json()
+            # Check if we got valid data (not an error response)
+            if not data.get("error") and data.get("fights"):
+                print(f"Successfully fetched report {report_id} from {url}")
+                return data
+        except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
+            print(f"Error fetching/decoding for report {report_id} from {url}: {e}")
+            continue
+    
+    return {"error": f"Failed to fetch data from both classic.warcraftlogs.com and fresh.warcraftlogs.com for report {report_id}"}
 
 
 def find_raid_zone_times(report_data):
@@ -160,10 +173,16 @@ def find_raid_zone_times(report_data):
     if not all_fights_in_zone:
         return None, None, None, "Could not find any fights in the recognized zone."
 
-    # The raid's effective start time is the beginning of the first fight
-    raid_start_time = all_fights_in_zone[0]["start_time"]
-    # The raid's effective end time is the conclusion of the last fight
-    raid_end_time = all_fights_in_zone[-1]["end_time"]
+    # Exclude "Unknown" fights from raid timing calculation
+    real_fights_in_zone = [f for f in all_fights_in_zone if f.get("name") != "Unknown"]
+    
+    if not real_fights_in_zone:
+        return None, None, None, "No valid fights found in the recognized zone (only 'Unknown' fights)."
+
+    # The raid's effective start time is the beginning of the first real fight
+    raid_start_time = real_fights_in_zone[0]["start_time"]
+    # The raid's effective end time is the conclusion of the last real fight
+    raid_end_time = real_fights_in_zone[-1]["end_time"]
 
     return primary_zone_name, raid_start_time, raid_end_time, None
 
@@ -204,6 +223,7 @@ def process_fights(report_data):
     wing_clear_times = {"Abomination": 0, "Plague": 0, "Spider": 0, "Military": 0}
 
     # Filter for fights that occurred within the primary raid instance timeline
+    # Exclude "Unknown" fights from processing but also from raid timing calculation
     relevant_fights = [
         f
         for f in report_data["fights"]
