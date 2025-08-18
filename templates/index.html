@@ -1,1013 +1,1745 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WCL Time Splits Analyzer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        border: "hsl(var(--border))",
+                        input: "hsl(var(--input))",
+                        ring: "hsl(var(--ring))",
+                        background: "hsl(var(--background))",
+                        foreground: "hsl(var(--foreground))",
+                        primary: {
+                            DEFAULT: "hsl(var(--primary))",
+                            foreground: "hsl(var(--primary-foreground))",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(var(--secondary))",
+                            foreground: "hsl(var(--secondary-foreground))",
+                        },
+                        destructive: {
+                            DEFAULT: "hsl(var(--destructive))",
+                            foreground: "hsl(var(--destructive-foreground))",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(var(--muted))",
+                            foreground: "hsl(var(--muted-foreground))",
+                        },
+                        accent: {
+                            DEFAULT: "hsl(var(--accent))",
+                            foreground: "hsl(var(--accent-foreground))",
+                        },
+                        popover: {
+                            DEFAULT: "hsl(var(--popover))",
+                            foreground: "hsl(var(--popover-foreground))",
+                        },
+                        card: {
+                            DEFAULT: "hsl(var(--card))",
+                            foreground: "hsl(var(--card-foreground))",
+                        },
+                    },
+                    borderRadius: {
+                        lg: "var(--radius)",
+                        md: "calc(var(--radius) - 2px)",
+                        sm: "calc(var(--radius) - 4px)",
+                    },
+                    keyframes: {
+                        "accordion-down": {
+                            from: { height: 0 },
+                            to: { height: "var(--radix-accordion-content-height)" },
+                        },
+                        "accordion-up": {
+                            from: { height: "var(--radix-accordion-content-height)" },
+                            to: { height: 0 },
+                        },
+                        shimmer: {
+                            "0%": { transform: "translateX(-100%)" },
+                            "100%": { transform: "translateX(100%)" },
+                        },
+                    },
+                    animation: {
+                        "accordion-down": "accordion-down 0.2s ease-out",
+                        "accordion-up": "accordion-up 0.2s ease-out",
+                        shimmer: "shimmer 2s infinite",
+                    },
+                },
+            },
+        }
+    </script>
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #1a1a1a;
-        color: #ffffff;
-        padding: 20px;
-      }
-
-      .container {
-        max-width: 1400px;
-        margin: 0 auto;
-      }
-
-      h1 {
-        text-align: center;
-        margin-bottom: 30px;
-        color: #ffffff;
-        font-size: 2.5em;
-      }
-
-      .input-section {
-        background-color: #2d2d2d;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 30px;
-      }
-
-      .input-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 15px;
-        margin-bottom: 15px;
-      }
-
-      .input-group {
-        display: flex;
-        flex-direction: column;
-      }
-
-      .button-row {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-top: 20px;
-      }
-
-      .add-run-btn {
-        background-color: #2196f3;
-        color: white;
-        padding: 12px 20px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-        font-weight: bold;
-        transition: background-color 0.3s;
-      }
-
-      .add-run-btn:hover {
-        background-color: #1976d2;
-      }
-
-      .add-run-btn:disabled {
-        background-color: #666;
-        cursor: not-allowed;
-      }
-
-      label {
-        margin-bottom: 5px;
-        font-weight: bold;
-        color: #cccccc;
-      }
-
-      input[type="text"] {
-        padding: 10px;
-        border: 1px solid #555;
-        border-radius: 4px;
-        background-color: #3d3d3d;
-        color: #ffffff;
-        font-size: 14px;
-      }
-
-      input[type="text"]:focus {
-        outline: none;
-        border-color: #4caf50;
-      }
-
-      .analyze-btn {
-        background-color: #4caf50;
-        color: white;
-        padding: 12px 30px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-        font-weight: bold;
-        transition: background-color 0.3s;
-      }
-
-      .analyze-btn:hover {
-        background-color: #45a049;
-      }
-
-      .analyze-btn:disabled {
-        background-color: #666;
-        cursor: not-allowed;
-      }
-
-      .loading {
-        text-align: center;
-        padding: 20px;
-        font-size: 18px;
-        color: #cccccc;
-      }
-
-      .error {
-        background-color: #d32f2f;
-        color: white;
-        padding: 15px;
-        border-radius: 4px;
-        margin: 20px 0;
-      }
-
-      .results-container {
-        background-color: #2d2d2d;
-        border-radius: 8px;
-        overflow: hidden;
-        margin-top: 30px;
-      }
-
-      .results-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 14px;
-      }
-
-      .results-table th {
-        background-color: #3d3d3d;
-        padding: 12px 8px;
-        text-align: center;
-        font-weight: bold;
-        border-bottom: 2px solid #555;
-        position: sticky;
-        top: 0;
-        z-index: 10;
-      }
-
-      .results-table th.boss-header {
-        text-align: left;
-        padding-left: 15px;
-      }
-
-      .results-table td {
-        padding: 8px;
-        text-align: center;
-        border-bottom: 1px solid #444;
-      }
-
-      .results-table tr:nth-child(even) {
-        background-color: #333;
-      }
-
-      .results-table tr:hover {
-        background-color: #404040;
-      }
-
-      .boss-name {
-        text-align: left !important;
-        font-weight: bold;
-        padding-left: 15px;
-        white-space: nowrap;
-      }
-
-      /* Responsive table layout */
-      .results-table {
-        table-layout: fixed;
-        width: 100%;
-      }
-
-      /* Dynamic boss column width will be set by JavaScript */
-      .results-table th:first-child,
-      .results-table td:first-child {
-        /* Width will be set dynamically */
-      }
-
-      /* Keep all columns (except boss) centered and auto-sized */
-      .results-table th:not(:first-child),
-      .results-table td:not(:first-child) {
-        text-align: center;
-      }
-
-      .delta-positive {
-        color: #4caf50;
-      }
-
-      .delta-negative {
-        color: #f44336;
-      }
-
-      .delta-neutral {
-        color: #cccccc;
-      }
-
-      .timeline-container {
-        margin-top: 30px;
-        background-color: #2d2d2d;
-        padding: 20px;
-        border-radius: 8px;
-      }
-
-      .timeline-header {
-        margin-bottom: 20px;
-        font-size: 18px;
-        font-weight: bold;
-      }
-
-      .timeline-scale {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 10px;
-        font-size: 12px;
-        color: #cccccc;
-      }
-
-      .timeline-row {
-        display: flex;
-        align-items: center;
-        margin-bottom: 12px;
-        height: 35px;
-      }
-
-      .timeline-label {
-        width: 120px;
-        font-size: 14px;
-        text-align: right;
-        padding-right: 10px;
-        color: #cccccc;
-      }
-
-      .timeline-bar-container {
-        flex: 1;
-        height: 30px;
-        background-color: #1a1a1a;
-        border: 1px solid #555;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .timeline-segment {
-        height: 100%;
-        position: absolute;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 11px;
-        font-weight: bold;
-        color: white;
-        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        padding: 0 4px;
-        cursor: pointer;
-      }
-
-      .timeline-segment.hide-text {
-        font-size: 0;
-        text-indent: -9999px;
-      }
-
-      .timeline-segment.hide-text:hover {
-        font-size: 11px;
-        text-indent: 0;
-        background-color: rgba(0, 0, 0, 0.8);
-        z-index: 100;
-      }
-
-      .segment-boss {
-        background-color: #d32f2f;
-      }
-
-      .segment-trash {
-        background-color: #666;
-      }
-
-      .hidden {
-        display: none;
-      }
-
-      @media (max-width: 768px) {
-        .input-grid {
-          grid-template-columns: 1fr;
+        :root {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 84% 4.9%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 212.7 26.8% 83.9%;
+            --radius: 0.5rem;
         }
 
-        .results-table {
-          font-size: 12px;
+        .light {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 47.4% 11.2%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 222.2 84% 4.9%;
         }
 
-        .results-table th,
-        .results-table td {
-          padding: 6px 4px;
+        * {
+            border-color: hsl(var(--border));
         }
 
-        .timeline-label {
-          width: 80px;
-          font-size: 10px;
+        body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            font-feature-settings: "rlig" 1, "calt" 1;
+            font-variant-numeric: tabular-nums;
         }
-      }
+
+        .shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shimmer::after {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            transform: translateX(-100%);
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.1),
+                transparent
+            );
+            animation: shimmer 2s infinite;
+            content: '';
+        }
+
+        .run-card {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .run-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .delta-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .delta-faster {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: rgb(34, 197, 94);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .delta-slower {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: rgb(239, 68, 68);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .delta-neutral {
+            background-color: rgba(156, 163, 175, 0.1);
+            color: rgb(156, 163, 175);
+            border: 1px solid rgba(156, 163, 175, 0.2);
+        }
+
+        .best-segment {
+            background-color: rgba(251, 191, 36, 0.1);
+            color: rgb(251, 191, 36);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+        }
+
+        .table-container {
+            position: relative;
+            overflow: auto;
+            max-height: 70vh;
+        }
+
+        .table-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: hsl(var(--muted));
+            border-radius: 4px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background: hsl(var(--muted-foreground));
+            border-radius: 4px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: hsl(var(--foreground));
+        }
+
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: hsl(var(--card));
+            backdrop-filter: blur(8px);
+        }
+
+        .timeline-segment {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+
+        .timeline-segment:hover {
+            transform: scaleY(1.1);
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .focus-visible:focus-visible {
+            outline: 2px solid hsl(var(--ring));
+            outline-offset: 2px;
+        }
+
+        @media (max-width: 768px) {
+            .table-container {
+                max-height: 60vh;
+            }
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
     </style>
-  </head>
-  <body>
-    <div class="container">
-      <h1>WCL Time Splits Analyzer</h1>
-
-      <div class="input-section">
-        <div id="input-container">
-          <div class="input-row">
-            <div class="input-group">
-              <label for="report1">Base Run (Full WCL URL):</label>
-              <input
-                type="text"
-                id="report1"
-                placeholder="e.g., https://fresh.warcraftlogs.com/reports/ZC1w86HjxWMTdPrt"
-              />
+</head>
+<body class="min-h-screen bg-background font-sans antialiased">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div class="container mx-auto flex h-16 items-center justify-between px-4">
+            <div class="flex items-center space-x-4">
+                <h1 class="text-xl font-semibold">WCL Time Splits Analyzer</h1>
+                <p class="text-sm text-muted-foreground hidden sm:block">Compare raid performance across multiple runs</p>
             </div>
-          </div>
-          <div class="input-row" id="comparison-runs">
-            <div class="input-group">
-              <label for="report2">Comparison Run 1:</label>
-              <input
-                type="text"
-                id="report2"
-                placeholder="e.g., https://classic.warcraftlogs.com/reports/xkTQz4GyjJ6XFbhw"
-              />
+            <div class="flex items-center space-x-2">
+                <button
+                    id="theme-toggle"
+                    class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+                    aria-label="Toggle theme"
+                >
+                    <i data-lucide="sun" class="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"></i>
+                    <i data-lucide="moon" class="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"></i>
+                </button>
+                <button
+                    id="help-button"
+                    class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+                    aria-label="Show keyboard shortcuts"
+                >
+                    <i data-lucide="help-circle" class="h-4 w-4"></i>
+                </button>
             </div>
-          </div>
         </div>
-        <div class="button-row">
-          <button class="add-run-btn" onclick="addRunInput()">+ Add Run</button>
-          <button class="analyze-btn" onclick="analyzeReports()">
-            Analyze Reports
-          </button>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 space-y-8">
+        <!-- Compare Panel -->
+        <section class="space-y-6" aria-labelledby="compare-heading">
+            <div class="flex items-center justify-between">
+                <h2 id="compare-heading" class="text-2xl font-semibold tracking-tight">Compare Runs</h2>
+                <div class="flex items-center space-x-2">
+                    <button
+                        id="analyze-btn"
+                        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                        disabled
+                    >
+                        <i data-lucide="play" class="mr-2 h-4 w-4"></i>
+                        Analyze
+                    </button>
+                </div>
+            </div>
+
+            <!-- Base Run Input -->
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <label for="base-run-input" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        Base Run <span class="text-destructive">*</span>
+                    </label>
+                    <div class="relative">
+                        <input
+                            id="base-run-input"
+                            type="text"
+                            placeholder="Paste WCL report or fight URL…"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            aria-describedby="base-run-help"
+                        >
+                        <div id="base-run-status" class="absolute right-3 top-1/2 -translate-y-1/2" aria-live="polite"></div>
+                    </div>
+                    <p id="base-run-help" class="text-xs text-muted-foreground">
+                        This will be used as the baseline for all comparisons
+                    </p>
+                </div>
+
+                <!-- Comparison Runs -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium">Comparison Runs</h3>
+                        <button
+                            id="add-run-btn"
+                            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                        >
+                            <i data-lucide="plus" class="mr-2 h-4 w-4"></i>
+                            Add Run
+                        </button>
+                    </div>
+                    <div id="comparison-runs" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="list">
+                        <!-- Comparison run cards will be added here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading State -->
+        <div id="loading-state" class="hidden space-y-4">
+            <div class="flex items-center space-x-2">
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                <span class="text-sm text-muted-foreground">Analyzing reports...</span>
+            </div>
+            <div class="space-y-3">
+                <div class="shimmer h-4 bg-muted rounded"></div>
+                <div class="shimmer h-4 bg-muted rounded w-3/4"></div>
+                <div class="shimmer h-4 bg-muted rounded w-1/2"></div>
+            </div>
         </div>
-      </div>
 
-      <div id="loading" class="loading hidden">
-        Analyzing reports... This may take a few moments.
-      </div>
+        <!-- Error State -->
+        <div id="error-state" class="hidden">
+            <div class="rounded-lg border border-destructive bg-destructive/10 p-4">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="alert-circle" class="h-4 w-4 text-destructive"></i>
+                    <h3 class="text-sm font-medium text-destructive">Error</h3>
+                </div>
+                <p id="error-message" class="mt-2 text-sm text-destructive/80"></p>
+            </div>
+        </div>
 
-      <div id="error" class="error hidden"></div>
+        <!-- Empty State -->
+        <div id="empty-state" class="text-center py-12">
+            <div class="mx-auto max-w-md">
+                <i data-lucide="bar-chart-3" class="mx-auto h-12 w-12 text-muted-foreground"></i>
+                <h3 class="mt-4 text-lg font-semibold">Ready to analyze</h3>
+                <p class="mt-2 text-sm text-muted-foreground">
+                    Add a Base Run to begin. You can paste multiple comparison URLs to see detailed performance differences.
+                </p>
+            </div>
+        </div>
 
-      <div id="results" class="results-container hidden">
-        <table class="results-table">
-          <thead id="results-header"></thead>
-          <tbody id="results-body"></tbody>
-        </table>
-      </div>
+        <!-- Filters -->
+        <section id="filters-section" class="hidden space-y-4" aria-labelledby="filters-heading">
+            <h2 id="filters-heading" class="text-xl font-semibold tracking-tight">Filters</h2>
+            <div class="flex flex-wrap gap-4">
+                <div class="flex items-center space-x-2">
+                    <label for="boss-filter" class="text-sm font-medium">Bosses:</label>
+                    <select
+                        id="boss-filter"
+                        class="flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <option value="all">All Bosses</option>
+                    </select>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="delta-filter" class="text-sm font-medium">Min Delta:</label>
+                    <select
+                        id="delta-filter"
+                        class="flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <option value="0">Show All</option>
+                        <option value="5000">≥5s difference</option>
+                        <option value="10000">≥10s difference</option>
+                        <option value="30000">≥30s difference</option>
+                    </select>
+                </div>
+            </div>
+        </section>
 
-      <div id="timeline" class="timeline-container hidden">
-        <div class="timeline-header">Timeline Visualization</div>
-        <div id="timeline-content"></div>
-      </div>
+        <!-- Results -->
+        <section id="results-section" class="hidden space-y-6" aria-labelledby="results-heading">
+            <div class="flex items-center justify-between">
+                <h2 id="results-heading" class="text-xl font-semibold tracking-tight">Comparison Results</h2>
+                <div class="flex items-center space-x-2">
+                    <button
+                        id="export-csv-btn"
+                        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                    >
+                        <i data-lucide="download" class="mr-2 h-4 w-4"></i>
+                        Export CSV
+                    </button>
+                    <button
+                        id="share-btn"
+                        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                    >
+                        <i data-lucide="share" class="mr-2 h-4 w-4"></i>
+                        Share
+                    </button>
+                </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="rounded-md border">
+                <div class="table-container">
+                    <table id="results-table" class="w-full" role="table" aria-label="Boss comparison results">
+                        <thead class="sticky-header">
+                            <tr role="row">
+                                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b" role="columnheader" tabindex="0" aria-sort="none">
+                                    <div class="flex items-center space-x-2">
+                                        <span>Boss</span>
+                                        <i data-lucide="chevron-up-down" class="h-4 w-4"></i>
+                                    </div>
+                                </th>
+                                <!-- Dynamic columns will be added here -->
+                            </tr>
+                        </thead>
+                        <tbody id="results-tbody" role="rowgroup">
+                            <!-- Results will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Timeline Visualization -->
+            <div class="space-y-4">
+                <h3 class="text-lg font-medium">Timeline Visualization</h3>
+                <div id="timeline-container" class="space-y-3">
+                    <!-- Timeline will be populated here -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="fixed inset-0 z-50 hidden bg-background/80 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
+        <div class="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 rounded-lg">
+            <div class="flex flex-col space-y-1.5 text-center sm:text-left">
+                <h2 id="help-modal-title" class="text-lg font-semibold leading-none tracking-tight">Keyboard Shortcuts</h2>
+            </div>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span>Analyze</span>
+                            <kbd class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">Enter</kbd>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Add Run</span>
+                            <kbd class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">Ctrl+N</kbd>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Toggle Theme</span>
+                            <kbd class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">Ctrl+D</kbd>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span>Export CSV</span>
+                            <kbd class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">Ctrl+E</kbd>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Help</span>
+                            <kbd class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">?</kbd>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Close Modal</span>
+                            <kbd class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">Esc</kbd>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+                <button
+                    id="help-modal-close"
+                    class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                >
+                    Got it
+                </button>
+            </div>
+        </div>
     </div>
 
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2" aria-live="polite"></div>
+
     <script>
-      function formatTimestamp(ms, includeHours = true) {
-        // Handle null/undefined values for idle time
-        if (ms === null || ms === undefined) {
-          return "---";
-        }
+        // Initialize Lucide icons
+        lucide.createIcons();
 
-        // Exact Google Apps Script getStringForTimeStamp logic:
-        // var delta = Math.abs(timeStamp) / 1000;
-        // var days = Math.floor(delta / 86400);
-        // delta -= days * 86400;
-        // var hours = Math.floor(delta / 3600) % 24;
-        // delta -= hours * 3600;
-        // var minutes = Math.floor(delta / 60) % 60;
-        // delta -= minutes * 60;
-        // var seconds = Math.floor(delta % 60);
+        // Global state
+        let currentData = null;
+        let runCounter = 0;
+        let sortState = { column: null, direction: 'asc' };
+        const maxRuns = 8;
+        const runColors = [
+            'rgb(59, 130, 246)',   // blue
+            'rgb(16, 185, 129)',   // emerald
+            'rgb(245, 101, 101)',  // red
+            'rgb(251, 191, 36)',   // amber
+            'rgb(139, 92, 246)',   // violet
+            'rgb(236, 72, 153)',   // pink
+            'rgb(6, 182, 212)',    // cyan
+            'rgb(34, 197, 94)',    // green
+        ];
 
-        let delta = Math.abs(ms) / 1000;
-        const days = Math.floor(delta / 86400);
-        delta -= days * 86400;
-        const hours = Math.floor(delta / 3600) % 24;
-        delta -= hours * 3600;
-        const minutes = Math.floor(delta / 60) % 60;
-        delta -= minutes * 60;
-        const seconds = Math.floor(delta % 60);
-
-        // Format with leading zeros exactly like Google Apps Script
-        let secondsString = "";
-        if (seconds < 10) secondsString = "0" + seconds.toString();
-        else secondsString = seconds.toString();
-
-        let minutesString = "";
-        if (minutes < 10) minutesString = "0" + minutes.toString();
-        else minutesString = minutes.toString();
-
-        if (includeHours)
-          return hours + ":" + minutesString + ":" + secondsString;
-        else return minutesString + ":" + secondsString;
-      }
-
-      function formatDelta(delta) {
-        if (delta === null || delta === undefined) return "";
-
-        const formatted = formatTimestamp(Math.abs(delta), false);
-        if (delta > 0) {
-          return `+${formatted}`;
-        } else if (delta < 0) {
-          return `-${formatted}`;
-        } else {
-          return formatted;
-        }
-      }
-
-      function getDeltaClass(delta) {
-        if (delta === null || delta === undefined) return "delta-neutral";
-        if (delta > 0) return "delta-negative";
-        if (delta < 0) return "delta-positive";
-        return "delta-neutral";
-      }
-
-      function checkTextFits(text, widthPx) {
-        // Create a temporary element to measure text width
-        const tempElement = document.createElement("span");
-        tempElement.style.visibility = "hidden";
-        tempElement.style.position = "absolute";
-        tempElement.style.fontSize = "11px";
-        tempElement.style.fontWeight = "bold";
-        tempElement.style.fontFamily =
-          "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
-        tempElement.textContent = text;
-        document.body.appendChild(tempElement);
-
-        const textWidth = tempElement.offsetWidth;
-        document.body.removeChild(tempElement);
-
-        // Add some padding for safety
-        return textWidth + 8 <= widthPx;
-      }
-
-      function abbreviateName(name) {
-        // Common boss name abbreviations
-        const abbreviations = {
-          "The Prophet Skeram": "Skeram",
-          "Silithid Royalty": "Bug Trio",
-          "Battleguard Sartura": "Sartura",
-          "Fankriss the Unyielding": "Fankriss",
-          Viscidus: "Visc",
-          "Princess Huhuran": "Huhu",
-          "Twin Emperors": "Twins",
-          Ouro: "Ouro",
-          "C'Thun": "C'Thun",
+        // DOM elements
+        const elements = {
+            baseRunInput: document.getElementById('base-run-input'),
+            baseRunStatus: document.getElementById('base-run-status'),
+            comparisonRuns: document.getElementById('comparison-runs'),
+            addRunBtn: document.getElementById('add-run-btn'),
+            analyzeBtn: document.getElementById('analyze-btn'),
+            themeToggle: document.getElementById('theme-toggle'),
+            helpButton: document.getElementById('help-button'),
+            helpModal: document.getElementById('help-modal'),
+            helpModalClose: document.getElementById('help-modal-close'),
+            loadingState: document.getElementById('loading-state'),
+            errorState: document.getElementById('error-state'),
+            errorMessage: document.getElementById('error-message'),
+            emptyState: document.getElementById('empty-state'),
+            filtersSection: document.getElementById('filters-section'),
+            resultsSection: document.getElementById('results-section'),
+            resultsTable: document.getElementById('results-table'),
+            resultsTbody: document.getElementById('results-tbody'),
+            timelineContainer: document.getElementById('timeline-container'),
+            bossFilter: document.getElementById('boss-filter'),
+            deltaFilter: document.getElementById('delta-filter'),
+            showTrash: document.getElementById('show-trash'),
+            exportCsvBtn: document.getElementById('export-csv-btn'),
+            shareBtn: document.getElementById('share-btn'),
+            toastContainer: document.getElementById('toast-container')
         };
 
-        // Return abbreviation if available, otherwise try to shorten
-        if (abbreviations[name]) {
-          return abbreviations[name];
+        // Utility functions
+        function formatTimestamp(ms, includeHours = true) {
+            if (ms === null || ms === undefined) return "---";
+            
+            let delta = Math.abs(ms) / 1000;
+            const days = Math.floor(delta / 86400);
+            delta -= days * 86400;
+            const hours = Math.floor(delta / 3600) % 24;
+            delta -= hours * 3600;
+            const minutes = Math.floor(delta / 60) % 60;
+            delta -= minutes * 60;
+            const seconds = Math.floor(delta % 60);
+
+            const secondsString = seconds < 10 ? "0" + seconds : seconds.toString();
+            const minutesString = minutes < 10 ? "0" + minutes : minutes.toString();
+
+            if (includeHours) {
+                return hours + ":" + minutesString + ":" + secondsString;
+            } else {
+                return minutesString + ":" + secondsString;
+            }
         }
 
-        // Generic shortening - take first word or first few characters
-        const words = name.split(" ");
-        if (words.length > 1) {
-          return words[0];
+        function formatDelta(delta) {
+            if (delta === null || delta === undefined) return "";
+            
+            const formatted = formatTimestamp(Math.abs(delta), false);
+            if (delta > 0) {
+                return `+${formatted}`;
+            } else if (delta < 0) {
+                return `-${formatted}`;
+            } else {
+                return formatted;
+            }
         }
 
-        // If single word, truncate if too long
-        if (name.length > 8) {
-          return name.substring(0, 6) + "...";
+        function getDeltaClass(delta) {
+            if (delta === null || delta === undefined) return "delta-neutral";
+            if (delta > 0) return "delta-slower";
+            if (delta < 0) return "delta-faster";
+            return "delta-neutral";
         }
 
-        return name;
-      }
-
-      async function analyzeReports() {
-        const reportUrls = [];
-        for (let i = 1; i <= runCounter; i++) {
-          const input = document.getElementById(`report${i}`);
-          if (input && input.value && input.value.trim()) {
-            reportUrls.push(input.value.trim());
-          }
-        }
-
-        if (reportUrls.length === 0) {
-          showError("Please enter at least one WCL report URL.");
-          return;
-        }
-
-        // Validate URLs
-        for (const url of reportUrls) {
-          if (!url.includes("warcraftlogs.com/reports/")) {
-            showError(
-              "Please enter valid WarcraftLogs URLs (e.g., https://fresh.warcraftlogs.com/reports/...)"
-            );
-            return;
-          }
-        }
-
-        showLoading(true);
-        hideError();
-        hideResults();
-
-        try {
-          const response = await fetch("/api/analyze", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              reports: reportUrls,
-            }),
-          });
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.error || "Failed to analyze reports");
-          }
-
-          displayResults(data);
-          displayTimeline(data);
-        } catch (error) {
-          console.error("Error:", error);
-          showError(`Error analyzing reports: ${error.message}`);
-        } finally {
-          showLoading(false);
-        }
-      }
-
-      let runCounter = 2;
-      const maxRuns = 10;
-
-      function addRunInput() {
-        if (runCounter >= maxRuns) {
-          showError(`Maximum of ${maxRuns} runs allowed.`);
-          return;
-        }
-
-        runCounter++;
-        const comparisonRuns = document.getElementById("comparison-runs");
-
-        const newInputGroup = document.createElement("div");
-        newInputGroup.className = "input-group";
-        newInputGroup.innerHTML = `
-                <label for="report${runCounter}">Comparison Run ${
-          runCounter - 1
-        }:</label>
-                <input type="text" id="report${runCounter}" placeholder="Full WCL URL (e.g., https://fresh.warcraftlogs.com/reports/...)">
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `rounded-lg border p-4 shadow-lg transition-all duration-300 transform translate-x-full opacity-0 ${
+                type === 'error' ? 'border-destructive bg-destructive/10 text-destructive' :
+                type === 'success' ? 'border-green-500 bg-green-500/10 text-green-500' :
+                'border-border bg-card text-card-foreground'
+            }`;
+            
+            toast.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="${type === 'error' ? 'alert-circle' : type === 'success' ? 'check-circle' : 'info'}" class="h-4 w-4"></i>
+                    <span class="text-sm">${message}</span>
+                </div>
             `;
-
-        comparisonRuns.appendChild(newInputGroup);
-
-        // Disable the add button if we've reached the maximum
-        if (runCounter >= maxRuns) {
-          document.querySelector(".add-run-btn").disabled = true;
-        }
-      }
-
-      function calculateTextWidth(
-        text,
-        fontSize = "14px",
-        fontWeight = "bold"
-      ) {
-        // Create a temporary element to measure text width
-        const tempElement = document.createElement("span");
-        tempElement.style.visibility = "hidden";
-        tempElement.style.position = "absolute";
-        tempElement.style.fontSize = fontSize;
-        tempElement.style.fontWeight = fontWeight;
-        tempElement.style.fontFamily =
-          "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
-        tempElement.textContent = text;
-        document.body.appendChild(tempElement);
-
-        const textWidth = tempElement.offsetWidth;
-        document.body.removeChild(tempElement);
-
-        return textWidth;
-      }
-
-      function displayResults(data) {
-        const header = document.getElementById("results-header");
-        const body = document.getElementById("results-body");
-
-        // Clear existing content
-        header.innerHTML = "";
-        body.innerHTML = "";
-
-        if (!data.results || data.results.length === 0) {
-          showError("No valid results found in the reports.");
-          return;
+            
+            elements.toastContainer.appendChild(toast);
+            lucide.createIcons();
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+            }, 100);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 5000);
         }
 
-        // Filter out results with errors
-        const validResults = data.results.filter(
-          (result) => result && !result.error
-        );
-        if (validResults.length === 0) {
-          showError("No valid results found in the reports.");
-          return;
+        function validateUrl(url) {
+            if (!url || !url.trim()) return { valid: false, message: 'URL is required' };
+            
+            const trimmedUrl = url.trim();
+            if (!trimmedUrl.includes('warcraftlogs.com/reports/')) {
+                return { valid: false, message: 'Invalid WCL URL format' };
+            }
+            
+            return { valid: true, message: 'Valid URL' };
         }
 
-        // Add responsive CSS class based on number of runs
-        const resultsTable = document.querySelector(".results-table");
-        if (validResults.length === 1) {
-          resultsTable.classList.add("single-run");
-          resultsTable.classList.remove("multi-run");
-        } else {
-          resultsTable.classList.add("multi-run");
-          resultsTable.classList.remove("single-run");
+        function updateUrlStatus(inputElement, statusElement) {
+            const validation = validateUrl(inputElement.value);
+            
+            if (!inputElement.value.trim()) {
+                statusElement.innerHTML = '';
+                return;
+            }
+            
+            if (validation.valid) {
+                statusElement.innerHTML = '<i data-lucide="check-circle" class="h-4 w-4 text-green-500"></i>';
+            } else {
+                statusElement.innerHTML = '<i data-lucide="alert-circle" class="h-4 w-4 text-destructive"></i>';
+                statusElement.title = validation.message;
+            }
+            
+            lucide.createIcons();
         }
 
-        // Get all unique boss names to calculate optimal column width
-        const allBosses = new Set();
-        validResults.forEach((result) => {
-          if (result.fights) {
-            result.fights.forEach((fight) => {
-              // Only include boss fights, not trash
-              if (fight.is_boss && !fight.name.includes("(Trash)")) {
-                allBosses.add(fight.name);
-              }
+        function updateAnalyzeButton() {
+            const baseUrl = elements.baseRunInput.value.trim();
+            const hasValidBase = validateUrl(baseUrl).valid;
+            
+            elements.analyzeBtn.disabled = !hasValidBase;
+        }
+
+        function createRunCard(index) {
+            const color = runColors[index % runColors.length];
+            const card = document.createElement('div');
+            card.className = 'run-card rounded-lg border bg-card p-4 space-y-3';
+            card.setAttribute('data-run-index', index);
+            card.setAttribute('role', 'listitem');
+            
+            card.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 rounded-full" style="background-color: ${color}"></div>
+                        <input
+                            type="text"
+                            class="run-label bg-transparent border-none p-0 text-sm font-medium focus:outline-none focus:ring-0"
+                            value="Run ${index + 1}"
+                            maxlength="20"
+                        >
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <button class="drag-handle p-1 hover:bg-accent rounded cursor-grab" aria-label="Drag to reorder">
+                            <i data-lucide="grip-vertical" class="h-4 w-4 text-muted-foreground"></i>
+                        </button>
+                        <button class="remove-run p-1 hover:bg-destructive/10 hover:text-destructive rounded" aria-label="Remove run">
+                            <i data-lucide="x" class="h-4 w-4"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <input
+                        type="text"
+                        class="run-url flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        placeholder="Paste comparison URL…"
+                    >
+                    <div class="flex items-center justify-between text-xs text-muted-foreground">
+                        <div class="run-status flex items-center space-x-1">
+                            <span>Ready</span>
+                        </div>
+                        <div class="run-actions">
+                            <button class="hide-run text-xs hover:text-foreground" aria-label="Hide from results">Hide</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners
+            const urlInput = card.querySelector('.run-url');
+            const statusDiv = card.querySelector('.run-status');
+            const removeBtn = card.querySelector('.remove-run');
+            const hideBtn = card.querySelector('.hide-run');
+            
+            urlInput.addEventListener('input', () => {
+                updateUrlStatus(urlInput, statusDiv);
+                updateAnalyzeButton();
             });
-          }
-        });
-
-        // Add "Total Run Time" to the list for width calculation
-        allBosses.add("Total Run Time");
-
-        // Calculate the optimal width for the boss column
-        let maxBossNameWidth = calculateTextWidth("Boss"); // Start with header width
-        Array.from(allBosses).forEach((bossName) => {
-          const width = calculateTextWidth(bossName);
-          if (width > maxBossNameWidth) {
-            maxBossNameWidth = width;
-          }
-        });
-
-        // Add padding (15px left + 8px right + some extra space)
-        const bossColumnWidth = maxBossNameWidth + 30;
-
-        // Set the dynamic width for the boss column
-        const style = document.createElement("style");
-        style.textContent = `
-                .results-table th:first-child,
-                .results-table td:first-child {
-                    width: ${bossColumnWidth}px;
-                }
-            `;
-        document.head.appendChild(style);
-
-        // Create header
-        const headerRow = document.createElement("tr");
-        headerRow.innerHTML = '<th class="boss-header">Boss</th>';
-
-        validResults.forEach((result, index) => {
-          const title = result.title || `Run ${index + 1}`;
-          headerRow.innerHTML += `<th>${title}</th>`;
-        });
-
-        // Add Best Segments column only if multiple runs
-        if (validResults.length > 1) {
-          headerRow.innerHTML +=
-            '<th style="color: #FFD700;">Best Segments</th>';
+            
+            removeBtn.addEventListener('click', () => {
+                card.remove();
+                runCounter--;
+                updateAnalyzeButton();
+                updateAddRunButton();
+            });
+            
+            hideBtn.addEventListener('click', () => {
+                card.classList.toggle('opacity-50');
+                hideBtn.textContent = card.classList.contains('opacity-50') ? 'Show' : 'Hide';
+            });
+            
+            return card;
         }
 
-        header.appendChild(headerRow);
+        function updateAddRunButton() {
+            elements.addRunBtn.disabled = runCounter >= maxRuns;
+            if (runCounter >= maxRuns) {
+                elements.addRunBtn.innerHTML = '<i data-lucide="plus" class="mr-2 h-4 w-4"></i>Maximum reached';
+            } else {
+                elements.addRunBtn.innerHTML = '<i data-lucide="plus" class="mr-2 h-4 w-4"></i>Add Run';
+            }
+            lucide.createIcons();
+        }
 
-        // Calculate best segments and theoretical best time
-        const bestSegments = {};
-        let theoreticalBestTime = 0;
-        let showBestSegments = validResults.length > 1; // Only show if multiple runs
+        function addComparisonRun() {
+            if (runCounter >= maxRuns) return;
+            
+            const card = createRunCard(runCounter);
+            elements.comparisonRuns.appendChild(card);
+            runCounter++;
+            
+            updateAddRunButton();
+            lucide.createIcons();
+            
+            // Focus the new URL input
+            const urlInput = card.querySelector('.run-url');
+            urlInput.focus();
+        }
 
-        if (showBestSegments) {
-          // Find the best individual segment time for each boss across all runs
-          Array.from(allBosses).forEach((bossName) => {
-            if (bossName === "Total Run Time") return; // Skip total time
+        function collectRunData() {
+            const runs = [elements.baseRunInput.value.trim()];
+            
+            const runCards = elements.comparisonRuns.querySelectorAll('.run-card:not(.opacity-50)');
+            runCards.forEach(card => {
+                const urlInput = card.querySelector('.run-url');
+                const url = urlInput.value.trim();
+                if (url) {
+                    runs.push(url);
+                }
+            });
+            
+            return runs;
+        }
 
-            let bestSegmentTime = null;
-            let bestRunIndex = -1;
+        function showState(state) {
+            // Hide all states
+            elements.loadingState.classList.add('hidden');
+            elements.errorState.classList.add('hidden');
+            elements.emptyState.classList.add('hidden');
+            elements.resultsSection.classList.add('hidden');
+            elements.filtersSection.classList.add('hidden');
+            
+            // Show requested state
+            switch (state) {
+                case 'loading':
+                    elements.loadingState.classList.remove('hidden');
+                    break;
+                case 'error':
+                    elements.errorState.classList.remove('hidden');
+                    break;
+                case 'results':
+                    elements.resultsSection.classList.remove('hidden');
+                    elements.filtersSection.classList.remove('hidden');
+                    break;
+                default:
+                    elements.emptyState.classList.remove('hidden');
+            }
+        }
 
+        function showError(message) {
+            elements.errorMessage.textContent = message;
+            showState('error');
+            showToast(message, 'error');
+        }
+
+        async function analyzeReports() {
+            const runs = collectRunData();
+            
+            if (runs.length === 0 || !runs[0]) {
+                showError('Please enter at least a base run URL.');
+                return;
+            }
+            
+            // Validate all URLs
+            for (const url of runs) {
+                const validation = validateUrl(url);
+                if (!validation.valid) {
+                    showError(`Invalid URL: ${validation.message}`);
+                    return;
+                }
+            }
+            
+            showState('loading');
+            elements.analyzeBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        reports: runs,
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to analyze reports');
+                }
+                
+                currentData = data;
+                displayResults(data);
+                displayTimeline(data);
+                showState('results');
+                showToast('Analysis complete!', 'success');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError(`Error analyzing reports: ${error.message}`);
+            } finally {
+                elements.analyzeBtn.disabled = false;
+            }
+        }
+
+        function displayResults(data) {
+            if (!data.results || data.results.length === 0) {
+                showError('No valid results found in the reports.');
+                return;
+            }
+            
+            const validResults = data.results.filter(result => result && !result.error);
+            if (validResults.length === 0) {
+                showError('No valid results found in the reports.');
+                return;
+            }
+            
+            // Clear existing content
+            const thead = elements.resultsTable.querySelector('thead tr');
+            const tbody = elements.resultsTbody;
+            
+            // Clear existing columns (keep boss column)
+            while (thead.children.length > 1) {
+                thead.removeChild(thead.lastChild);
+            }
+            tbody.innerHTML = '';
+            
+            // Add run columns
             validResults.forEach((result, index) => {
-              const fight = result.fights?.find(
-                (f) => f.name === bossName && f.is_boss
-              );
-              if (
-                fight &&
-                fight.individual_segment_time !== undefined &&
-                fight.individual_segment_time !== null
-              ) {
-                if (
-                  bestSegmentTime === null ||
-                  fight.individual_segment_time < bestSegmentTime
-                ) {
-                  bestSegmentTime = fight.individual_segment_time;
-                  bestRunIndex = index;
-                }
-              }
+                const th = document.createElement('th');
+                th.className = 'h-12 px-4 text-center align-middle font-medium text-muted-foreground border-b';
+                th.setAttribute('role', 'columnheader');
+                th.setAttribute('tabindex', '0');
+                th.setAttribute('aria-sort', 'none');
+                
+                const color = runColors[index % runColors.length];
+                th.innerHTML = `
+                    <div class="flex items-center justify-center space-x-2">
+                        <div class="w-2 h-2 rounded-full" style="background-color: ${color}"></div>
+                        <span>${result.title || `Run ${index + 1}`}</span>
+                        <i data-lucide="chevron-up-down" class="h-4 w-4"></i>
+                    </div>
+                `;
+                thead.appendChild(th);
             });
-
-            if (bestSegmentTime !== null) {
-              bestSegments[bossName] = bestSegmentTime; // Best individual segment time
-              console.log(
-                `Best ${bossName} segment time: ${formatTimestamp(
-                  bestSegmentTime,
-                  true
-                )} from run ${bestRunIndex + 1}`
-              );
+            
+            // Add Best Segments column if multiple runs
+            if (validResults.length > 1) {
+                const th = document.createElement('th');
+                th.className = 'h-12 px-4 text-center align-middle font-medium border-b';
+                th.style.color = 'rgb(251, 191, 36)';
+                th.innerHTML = `
+                    <div class="flex items-center justify-center space-x-2">
+                        <i data-lucide="trophy" class="h-4 w-4"></i>
+                        <span>Best Segments</span>
+                    </div>
+                `;
+                thead.appendChild(th);
             }
-          });
-
-          // Calculate theoretical best time by summing up all best segment times
-          let cumulativeTime = 0;
-          Array.from(allBosses).forEach((bossName) => {
-            if (bossName === "Total Run Time") return;
-            if (bestSegments[bossName] !== undefined) {
-              cumulativeTime += bestSegments[bossName];
+            
+            // Calculate best segments
+            const bestSegments = {};
+            let theoreticalBestTime = 0;
+            
+            if (validResults.length > 1) {
+                // Get all unique boss names
+                const allBosses = new Set();
+                validResults.forEach(result => {
+                    if (result.fights) {
+                        result.fights.forEach(fight => {
+                            if (fight.is_boss && !fight.name.includes('(Trash)')) {
+                                allBosses.add(fight.name);
+                            }
+                        });
+                    }
+                });
+                
+                // Find best segment time for each boss
+                Array.from(allBosses).forEach(bossName => {
+                    let bestSegmentTime = null;
+                    
+                    validResults.forEach(result => {
+                        const fight = result.fights?.find(f => f.name === bossName && f.is_boss);
+                        if (fight && fight.individual_segment_time !== undefined && fight.individual_segment_time !== null) {
+                            if (bestSegmentTime === null || fight.individual_segment_time < bestSegmentTime) {
+                                bestSegmentTime = fight.individual_segment_time;
+                            }
+                        }
+                    });
+                    
+                    if (bestSegmentTime !== null) {
+                        bestSegments[bossName] = bestSegmentTime;
+                        theoreticalBestTime += bestSegmentTime;
+                    }
+                });
             }
-          });
-          theoreticalBestTime = cumulativeTime;
-          console.log(
-            `Theoretical best time: ${formatTimestamp(
-              theoreticalBestTime,
-              true
-            )}`
-          );
-        }
-
-        // Create rows for each boss (excluding "Total Run Time" which we'll add separately)
-        let cumulativeBestTime = 0; // <<< FIX: Initialize cumulative time for Best Segments column
-        Array.from(allBosses).forEach((bossName) => {
-          if (bossName === "Total Run Time") return; // Skip, we'll add this separately
-
-          const row = document.createElement("tr");
-          row.innerHTML = `<td class="boss-name">${bossName}</td>`;
-
-          const baseFight = validResults[0].fights?.find(
-            (f) => f.name === bossName && f.is_boss
-          );
-          const baseEndTime = baseFight ? baseFight.end_time_rel : null; // Use end_time_rel for boss kill time comparisons
-
-          validResults.forEach((result, index) => {
-            const fight = result.fights?.find(
-              (f) => f.name === bossName && f.is_boss
-            );
-            if (
-              fight &&
-              fight.end_time_rel !== undefined &&
-              fight.end_time_rel !== null
-            ) {
-              const timeStr = formatTimestamp(fight.end_time_rel, true); // Use end_time_rel for boss kill times
-
-              // Show boss kill time delta (main delta in parentheses on same line)
-              let bossDeltaStr = "";
-              if (index > 0 && baseEndTime !== null) {
-                const rawDelta = fight.end_time_rel - baseEndTime;
-                const bossDelta = Math.round(rawDelta / 1000) * 1000;
-                bossDeltaStr = formatDelta(bossDelta);
-                const bossDeltaClass = getDeltaClass(bossDelta);
-                bossDeltaStr = ` <span class="${bossDeltaClass}">(${bossDeltaStr})</span>`;
-              }
-
-              // Show boss fight duration delta (on line below)
-              let durationDeltaStr = "";
-              if (
-                index > 0 &&
-                fight.duration !== undefined &&
-                fight.duration !== null &&
-                baseFight &&
-                baseFight.duration !== undefined &&
-                baseFight.duration !== null
-              ) {
-                const rawDurationDelta = fight.duration - baseFight.duration;
-                const durationDelta =
-                  Math.round(rawDurationDelta / 1000) * 1000;
-                const durationDeltaFormatted = formatDelta(durationDelta);
-                const durationDeltaClass = getDeltaClass(durationDelta);
-                durationDeltaStr = `<br><span class="${durationDeltaClass}">${durationDeltaFormatted}</span>`;
-              }
-
-              row.innerHTML += `<td>${timeStr}${bossDeltaStr}${durationDeltaStr}</td>`;
-            } else {
-              row.innerHTML += "<td>-</td>";
-            }
-          });
-
-          // Add best segment time only if multiple runs
-          if (showBestSegments) {
-            if (bestSegments[bossName] !== undefined) {
-              // <<< FIX: Add the current boss's best segment to the cumulative total
-              cumulativeBestTime += bestSegments[bossName];
-
-              // <<< FIX: Display the new cumulative time
-              const bestTimeStr = formatTimestamp(cumulativeBestTime, true);
-
-              // <<< FIX: Calculate delta against the base run's cumulative time (end_time_rel)
-              const rawCumulativeDelta =
-                baseEndTime !== null ? cumulativeBestTime - baseEndTime : null;
-              const cumulativeDelta =
-                rawCumulativeDelta !== null
-                  ? Math.round(rawCumulativeDelta / 1000) * 1000
-                  : null;
-              const cumulativeDeltaStr = formatDelta(cumulativeDelta);
-              const cumulativeDeltaClass = getDeltaClass(cumulativeDelta);
-
-              row.innerHTML += `<td style="color: #FFD700;">${bestTimeStr} <span class="${cumulativeDeltaClass}">(${cumulativeDeltaStr})</span></td>`;
-            } else {
-              row.innerHTML += '<td style="color: #FFD700;">-</td>';
-            }
-          }
-
-          body.appendChild(row);
-        });
-
-        // Add total time row
-        const totalRow = document.createElement("tr");
-        totalRow.innerHTML =
-          '<td class="boss-name"><strong>Total Run Time</strong></td>';
-
-        const baseTotal = validResults[0].total_duration;
-        validResults.forEach((result, index) => {
-          if (
-            result.total_duration !== undefined &&
-            result.total_duration !== null
-          ) {
-            const timeStr = formatTimestamp(result.total_duration, true);
-            if (index === 0) {
-              totalRow.innerHTML += `<td><strong>${timeStr}</strong></td>`;
-            } else {
-              // Calculate raw delta first, then round to avoid precision issues
-              const rawDelta = result.total_duration - baseTotal;
-              const delta = Math.round(rawDelta / 1000) * 1000;
-              const deltaStr = formatDelta(delta);
-              const deltaClass = getDeltaClass(delta);
-              totalRow.innerHTML += `<td><strong>${timeStr}</strong><br><span class="${deltaClass}">${deltaStr}</span></td>`;
-            }
-          } else {
-            totalRow.innerHTML += "<td><strong>-</strong></td>";
-          }
-        });
-
-        // Add theoretical best time only if multiple runs
-        if (showBestSegments) {
-          const theoreticalBestStr = formatTimestamp(theoreticalBestTime, true);
-          // Calculate raw theoretical delta first, then round to avoid precision issues
-          const rawTheoreticalDelta = theoreticalBestTime - baseTotal;
-          const theoreticalDelta =
-            Math.round(rawTheoreticalDelta / 1000) * 1000;
-          const theoreticalDeltaStr = formatDelta(theoreticalDelta);
-          const theoreticalDeltaClass = getDeltaClass(theoreticalDelta);
-          totalRow.innerHTML += `<td style="color: #FFD700;"><strong>${theoreticalBestStr}</strong><br><span class="${theoreticalDeltaClass}">${theoreticalDeltaStr}</span></td>`;
-        }
-
-        body.appendChild(totalRow);
-
-        showResults();
-      }
-
-      function displayTimeline(data) {
-        const timelineContent = document.getElementById("timeline-content");
-        timelineContent.innerHTML = "";
-
-        if (!data.results || data.results.length === 0) return;
-
-        // Filter out results with errors
-        const validResults = data.results.filter(
-          (result) => result && !result.error
-        );
-        if (validResults.length === 0) return;
-
-        // Find the maximum time across all runs for scaling
-        let maxTime = 0;
-        validResults.forEach((result) => {
-          if (result.total_duration > maxTime) {
-            maxTime = result.total_duration;
-          }
-        });
-
-        // Create time scale
-        const scaleDiv = document.createElement("div");
-        scaleDiv.className = "timeline-scale";
-        const scalePoints = 10;
-        for (let i = 0; i <= scalePoints; i++) {
-          const time = (maxTime * i) / scalePoints;
-          const span = document.createElement("span");
-          span.textContent = formatTimestamp(time, true);
-          scaleDiv.appendChild(span);
-        }
-        timelineContent.appendChild(scaleDiv);
-
-        // Create timeline rows for each run
-        validResults.forEach((result, index) => {
-          const row = document.createElement("div");
-          row.className = "timeline-row";
-
-          const label = document.createElement("div");
-          label.className = "timeline-label";
-          label.textContent = result.title || `Run ${index + 1}`;
-          row.appendChild(label);
-
-          const barContainer = document.createElement("div");
-          barContainer.className = "timeline-bar-container";
-
-          if (result.timeline_data) {
-            result.timeline_data.forEach((segment) => {
-              const segmentDiv = document.createElement("div");
-              segmentDiv.className = `timeline-segment ${
-                segment.is_boss ? "segment-boss" : "segment-trash"
-              }`;
-
-              const leftPercent = (segment.start / maxTime) * 100;
-              const widthPercent =
-                ((segment.end - segment.start) / maxTime) * 100;
-
-              segmentDiv.style.left = `${leftPercent}%`;
-              segmentDiv.style.width = `${widthPercent}%`;
-
-              // Use "Trash" for non-boss segments, full name for bosses
-              const displayName = segment.is_boss ? segment.name : "Trash";
-
-              segmentDiv.title = `${segment.name}: ${formatTimestamp(
-                segment.start
-              )} - ${formatTimestamp(segment.end)}`;
-
-              barContainer.appendChild(segmentDiv);
-
-              // Smart text display logic - run after element is added to DOM
-              setTimeout(() => {
-                const segmentWidthPx = segmentDiv.offsetWidth;
-                const textFits = checkTextFits(displayName, segmentWidthPx);
-
-                if (textFits) {
-                  segmentDiv.textContent = displayName;
-                } else {
-                  // Try abbreviation for boss names
-                  if (segment.is_boss) {
-                    const abbreviated = abbreviateName(displayName);
-                    const abbreviatedFits = checkTextFits(
-                      abbreviated,
-                      segmentWidthPx
-                    );
-                    if (abbreviatedFits) {
-                      segmentDiv.textContent = abbreviated;
+            
+            // Create boss rows
+            const allBosses = new Set();
+            validResults.forEach(result => {
+                if (result.fights) {
+                    result.fights.forEach(fight => {
+                        if (fight.is_boss && !fight.name.includes('(Trash)')) {
+                            allBosses.add(fight.name);
+                        }
+                    });
+                }
+            });
+            
+            let cumulativeBestTime = 0;
+            Array.from(allBosses).forEach(bossName => {
+                const row = document.createElement('tr');
+                row.className = 'border-b transition-colors hover:bg-muted/50';
+                row.setAttribute('role', 'row');
+                
+                // Boss name cell
+                const bossCell = document.createElement('td');
+                bossCell.className = 'p-4 align-middle font-medium';
+                bossCell.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="sword" class="h-4 w-4 text-muted-foreground"></i>
+                        <span>${bossName}</span>
+                    </div>
+                `;
+                row.appendChild(bossCell);
+                
+                const baseFight = validResults[0].fights?.find(f => f.name === bossName && f.is_boss);
+                const baseEndTime = baseFight ? baseFight.end_time_rel : null;
+                
+                // Run data cells
+                validResults.forEach((result, index) => {
+                    const cell = document.createElement('td');
+                    cell.className = 'p-4 align-middle text-center font-mono text-sm';
+                    
+                    const fight = result.fights?.find(f => f.name === bossName && f.is_boss);
+                    if (fight && fight.end_time_rel !== undefined && fight.end_time_rel !== null) {
+                        const timeStr = formatTimestamp(fight.end_time_rel, true);
+                        
+                        let content = `<div class="font-semibold">${timeStr}</div>`;
+                        
+                        // Add delta for comparison runs
+                        if (index > 0 && baseEndTime !== null) {
+                            const rawDelta = fight.end_time_rel - baseEndTime;
+                            const delta = Math.round(rawDelta / 1000) * 1000;
+                            const deltaStr = formatDelta(delta);
+                            const deltaClass = getDeltaClass(delta);
+                            
+                            content += `<div class="delta-pill ${deltaClass} mt-1">
+                                <i data-lucide="${delta < 0 ? 'trending-down' : delta > 0 ? 'trending-up' : 'minus'}" class="h-3 w-3"></i>
+                                ${deltaStr}
+                            </div>`;
+                        }
+                        
+                        cell.innerHTML = content;
                     } else {
-                      segmentDiv.classList.add("hide-text");
-                      segmentDiv.textContent = displayName; // Full text for hover
+                        cell.innerHTML = '<span class="text-muted-foreground">—</span>';
                     }
-                  } else {
-                    // For trash, just hide if "Trash" doesn't fit
-                    if (segmentWidthPx < 30) {
-                      // Very small segments
-                      segmentDiv.classList.add("hide-text");
+                    
+                    row.appendChild(cell);
+                });
+                
+                // Best segment cell
+                if (validResults.length > 1) {
+                    const bestCell = document.createElement('td');
+                    bestCell.className = 'p-4 align-middle text-center font-mono text-sm';
+                    
+                    if (bestSegments[bossName] !== undefined) {
+                        cumulativeBestTime += bestSegments[bossName];
+                        const bestTimeStr = formatTimestamp(cumulativeBestTime, true);
+                        
+                        const rawCumulativeDelta = baseEndTime !== null ? cumulativeBestTime - baseEndTime : null;
+                        const cumulativeDelta = rawCumulativeDelta !== null ? Math.round(rawCumulativeDelta / 1000) * 1000 : null;
+                        const cumulativeDeltaStr = formatDelta(cumulativeDelta);
+                        const cumulativeDeltaClass = getDeltaClass(cumulativeDelta);
+                        
+                        bestCell.innerHTML = `
+                            <div class="best-segment font-semibold">${bestTimeStr}</div>
+                            <div class="delta-pill ${cumulativeDeltaClass} mt-1">
+                                <i data-lucide="${cumulativeDelta < 0 ? 'trending-down' : cumulativeDelta > 0 ? 'trending-up' : 'minus'}" class="h-3 w-3"></i>
+                                ${cumulativeDeltaStr}
+                            </div>
+                        `;
+                    } else {
+                        bestCell.innerHTML = '<span class="text-muted-foreground">—</span>';
                     }
-                    segmentDiv.textContent = displayName;
-                  }
+                    
+                    row.appendChild(bestCell);
                 }
-              }, 0);
+                
+                tbody.appendChild(row);
             });
-          }
+            
+            // Add total time row
+            const totalRow = document.createElement('tr');
+            totalRow.className = 'border-b-2 bg-muted/20 font-semibold';
+            
+            const totalBossCell = document.createElement('td');
+            totalBossCell.className = 'p-4 align-middle font-semibold';
+            totalBossCell.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="clock" class="h-4 w-4 text-muted-foreground"></i>
+                    <span>Total Run Time</span>
+                </div>
+            `;
+            totalRow.appendChild(totalBossCell);
+            
+            const baseTotal = validResults[0].total_duration;
+            validResults.forEach((result, index) => {
+                const cell = document.createElement('td');
+                cell.className = 'p-4 align-middle text-center font-mono text-sm font-semibold';
+                
+                if (result.total_duration !== undefined && result.total_duration !== null) {
+                    const timeStr = formatTimestamp(result.total_duration, true);
+                    let content = `<div class="text-lg">${timeStr}</div>`;
+                    
+                    if (index > 0) {
+                        const rawDelta = result.total_duration - baseTotal;
+                        const delta = Math.round(rawDelta / 1000) * 1000;
+                        const deltaStr = formatDelta(delta);
+                        const deltaClass = getDeltaClass(delta);
+                        
+                        content += `<div class="delta-pill ${deltaClass} mt-1">
+                            <i data-lucide="${delta < 0 ? 'trending-down' : delta > 0 ? 'trending-up' : 'minus'}" class="h-3 w-3"></i>
+                            ${deltaStr}
+                        </div>`;
+                    }
+                    
+                    cell.innerHTML = content;
+                } else {
+                    cell.innerHTML = '<span class="text-muted-foreground">—</span>';
+                }
+                
+                totalRow.appendChild(cell);
+            });
+            
+            // Theoretical best total
+            if (validResults.length > 1) {
+                const bestTotalCell = document.createElement('td');
+                bestTotalCell.className = 'p-4 align-middle text-center font-mono text-sm font-semibold';
+                
+                const theoreticalBestStr = formatTimestamp(theoreticalBestTime, true);
+                const rawTheoreticalDelta = theoreticalBestTime - baseTotal;
+                const theoreticalDelta = Math.round(rawTheoreticalDelta / 1000) * 1000;
+                const theoreticalDeltaStr = formatDelta(theoreticalDelta);
+                const theoreticalDeltaClass = getDeltaClass(theoreticalDelta);
+                
+                bestTotalCell.innerHTML = `
+                    <div class="best-segment text-lg">${theoreticalBestStr}</div>
+                    <div class="delta-pill ${theoreticalDeltaClass} mt-1">
+                        <i data-lucide="${theoreticalDelta < 0 ? 'trending-down' : theoreticalDelta > 0 ? 'trending-up' : 'minus'}" class="h-3 w-3"></i>
+                        ${theoreticalDeltaStr}
+                    </div>
+                `;
+                
+                totalRow.appendChild(bestTotalCell);
+            }
+            
+            tbody.appendChild(totalRow);
+            
+            // Update boss filter options
+            elements.bossFilter.innerHTML = '<option value="all">All Bosses</option>';
+            Array.from(allBosses).forEach(bossName => {
+                const option = document.createElement('option');
+                option.value = bossName;
+                option.textContent = bossName;
+                elements.bossFilter.appendChild(option);
+            });
+            
+            lucide.createIcons();
+        }
 
-          row.appendChild(barContainer);
-          timelineContent.appendChild(row);
+        // Boss name abbreviation utility
+        function abbreviateBossName(name) {
+            // Boss map overrides
+            const bossMap = {
+                'The Prophet Skeram': 'Skeram',
+                'Battleguard Sartura': 'Sartura', 
+                'Fankriss the Unyielding': 'Fankriss',
+                'Princess Huhuran': 'Huhuran',
+                'Twin Emperors': 'Twins',
+                'Viscidus': 'Visc',
+                'Ouro': 'Ouro',
+                "C'Thun": "C'Thun"
+            };
+            
+            if (bossMap[name]) {
+                return bossMap[name];
+            }
+            
+            // Strip articles and filler words
+            let abbreviated = name.replace(/^(The|the)\s+/, '')
+                                 .replace(/\s+(of|the)\s+/g, ' ')
+                                 .replace(/,/g, '');
+            
+            // If still too long, take first word or truncate
+            const words = abbreviated.split(' ');
+            if (words.length > 1) {
+                abbreviated = words[0];
+            }
+            
+            // Final truncation if needed
+            if (abbreviated.length > 8) {
+                abbreviated = abbreviated.substring(0, 6) + '…';
+            }
+            
+            return abbreviated;
+        }
+
+        // Text fitting utility
+        function measureTextWidth(text, fontSize = 12) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            context.font = `${fontSize}px Inter, system-ui, sans-serif`;
+            return context.measureText(text).width;
+        }
+
+        function fitLabel(text, availableWidth, padding = 8) {
+            const innerWidth = availableWidth - (padding * 2);
+            if (innerWidth < 36) return null; // Too narrow
+            
+            const fontSizes = [12, 11, 10];
+            
+            for (const fontSize of fontSizes) {
+                const textWidth = measureTextWidth(text, fontSize);
+                if (textWidth <= innerWidth) {
+                    return { text, fontSize };
+                }
+            }
+            
+            return null; // Doesn't fit
+        }
+
+        function displayTimeline(data) {
+            if (!data.results || data.results.length === 0) return;
+            
+            const validResults = data.results.filter(result => result && !result.error);
+            if (validResults.length === 0) return;
+            
+            elements.timelineContainer.innerHTML = '';
+            
+            // Find max time for scaling
+            let maxTime = 0;
+            validResults.forEach(result => {
+                if (result.total_duration > maxTime) {
+                    maxTime = result.total_duration;
+                }
+            });
+            
+            // Create time scale with ticks - ensure proper alignment
+            const scaleContainer = document.createElement('div');
+            scaleContainer.className = 'relative mb-4';
+            
+            // Time scale labels with proper spacing to match timeline bars
+            const scaleDiv = document.createElement('div');
+            scaleDiv.className = 'flex justify-between text-xs text-muted-foreground mb-1';
+            scaleDiv.style.marginLeft = 'calc(6rem + 1rem)'; // Match the label width + space-x-4 gap
+            scaleDiv.style.marginRight = '0'; // No extra margin needed
+            for (let i = 0; i <= 10; i++) {
+                const time = (maxTime * i) / 10;
+                const span = document.createElement('span');
+                span.textContent = formatTimestamp(time, true);
+                scaleDiv.appendChild(span);
+            }
+            scaleContainer.appendChild(scaleDiv);
+            
+            // Tick marks aligned with timeline bars
+            const ticksDiv = document.createElement('div');
+            ticksDiv.className = 'relative h-2 bg-muted/30 rounded-sm';
+            ticksDiv.style.marginLeft = 'calc(6rem + 1rem)'; // Match the label width + space-x-4 gap
+            ticksDiv.style.marginRight = '0'; // No extra margin needed
+            
+            // Major ticks (every 10%)
+            for (let i = 0; i <= 10; i++) {
+                const tick = document.createElement('div');
+                tick.className = 'absolute w-0.5 h-full bg-muted-foreground/60';
+                tick.style.left = `${(i * 10)}%`;
+                tick.style.transform = 'translateX(-50%)';
+                ticksDiv.appendChild(tick);
+            }
+            
+            // Minor ticks (every 2%)
+            for (let i = 2; i <= 48; i += 2) {
+                if (i % 10 !== 0) { // Skip major tick positions
+                    const tick = document.createElement('div');
+                    tick.className = 'absolute w-0.5 h-1/2 bg-muted-foreground/30 top-1/4';
+                    tick.style.left = `${i}%`;
+                    tick.style.transform = 'translateX(-50%)';
+                    ticksDiv.appendChild(tick);
+                }
+            }
+            
+            scaleContainer.appendChild(ticksDiv);
+            elements.timelineContainer.appendChild(scaleContainer);
+            
+            // Create timeline rows
+            validResults.forEach((result, index) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center space-x-4 mb-3';
+                
+                const color = runColors[index % runColors.length];
+                
+                const label = document.createElement('div');
+                label.className = 'w-24 text-sm font-medium text-right flex-shrink-0';
+                label.innerHTML = `
+                    <div class="flex items-center justify-end space-x-2">
+                        <span>${result.title || `Run ${index + 1}`}</span>
+                        <div class="w-2 h-2 rounded-full" style="background-color: ${color}"></div>
+                    </div>
+                `;
+                
+                const timelineBar = document.createElement('div');
+                timelineBar.className = 'flex-1 h-8 bg-muted rounded-md relative overflow-hidden';
+                
+                if (result.timeline_data) {
+                    // Get timeline bar width for calculations
+                    setTimeout(() => {
+                        const barWidth = timelineBar.offsetWidth;
+                        
+                        result.timeline_data.forEach(segment => {
+                            const segmentDiv = document.createElement('div');
+                            const isTrash = !segment.is_boss;
+                            
+                            segmentDiv.className = 'timeline-segment absolute h-full flex items-center justify-center text-xs font-medium text-white overflow-hidden';
+                            segmentDiv.style.backgroundColor = isTrash ? '#707887' : '#D42F2F';
+                            segmentDiv.setAttribute('role', 'button');
+                            segmentDiv.setAttribute('tabindex', '0');
+                            
+                            const leftPercent = (segment.start / maxTime) * 100;
+                            const widthPercent = ((segment.end - segment.start) / maxTime) * 100;
+                            const segmentWidth = (widthPercent / 100) * barWidth;
+                            
+                            segmentDiv.style.left = `${leftPercent}%`;
+                            segmentDiv.style.width = `${widthPercent}%`;
+                            
+                            // Determine label text
+                            const baseText = isTrash ? 'Trash' : segment.name;
+                            const displayText = isTrash ? 'Trash' : abbreviateBossName(segment.name);
+                            
+                            // Set tooltip and aria-label
+                            const timeRange = `${formatTimestamp(segment.start)} - ${formatTimestamp(segment.end)}`;
+                            segmentDiv.title = `${baseText} • ${timeRange}`;
+                            segmentDiv.setAttribute('aria-label', `${baseText}, ${timeRange}`);
+                            
+                            // Try to fit label
+                            const fitted = fitLabel(displayText, segmentWidth, 8);
+                            
+                            if (fitted) {
+                                const textSpan = document.createElement('span');
+                                textSpan.className = 'block w-full text-center leading-8 font-medium overflow-hidden text-ellipsis whitespace-nowrap px-2';
+                                textSpan.style.fontSize = `${fitted.fontSize}px`;
+                                textSpan.textContent = fitted.text;
+                                segmentDiv.appendChild(textSpan);
+                            }
+                            
+                            // Add focus styles
+                            segmentDiv.addEventListener('focus', () => {
+                                segmentDiv.style.outline = '2px solid hsl(var(--ring))';
+                                segmentDiv.style.outlineOffset = '2px';
+                            });
+                            
+                            segmentDiv.addEventListener('blur', () => {
+                                segmentDiv.style.outline = 'none';
+                            });
+                            
+                            timelineBar.appendChild(segmentDiv);
+                        });
+                    }, 0);
+                }
+                
+                row.appendChild(label);
+                row.appendChild(timelineBar);
+                elements.timelineContainer.appendChild(row);
+            });
+        }
+
+        function exportToCsv() {
+            if (!currentData || !currentData.results) {
+                showToast('No data to export', 'error');
+                return;
+            }
+            
+            const validResults = currentData.results.filter(result => result && !result.error);
+            if (validResults.length === 0) {
+                showToast('No valid data to export', 'error');
+                return;
+            }
+            
+            // Create CSV content
+            let csvContent = 'Boss';
+            validResults.forEach((result, index) => {
+                csvContent += `,${result.title || `Run ${index + 1}`}`;
+            });
+            if (validResults.length > 1) {
+                csvContent += ',Best Segments';
+            }
+            csvContent += '\n';
+            
+            // Get all unique boss names
+            const allBosses = new Set();
+            validResults.forEach(result => {
+                if (result.fights) {
+                    result.fights.forEach(fight => {
+                        if (fight.is_boss && !fight.name.includes('(Trash)')) {
+                            allBosses.add(fight.name);
+                        }
+                    });
+                }
+            });
+            
+            // Calculate best segments
+            const bestSegments = {};
+            if (validResults.length > 1) {
+                Array.from(allBosses).forEach(bossName => {
+                    let bestSegmentTime = null;
+                    validResults.forEach(result => {
+                        const fight = result.fights?.find(f => f.name === bossName && f.is_boss);
+                        if (fight && fight.individual_segment_time !== undefined && fight.individual_segment_time !== null) {
+                            if (bestSegmentTime === null || fight.individual_segment_time < bestSegmentTime) {
+                                bestSegmentTime = fight.individual_segment_time;
+                            }
+                        }
+                    });
+                    if (bestSegmentTime !== null) {
+                        bestSegments[bossName] = bestSegmentTime;
+                    }
+                });
+            }
+            
+            // Add boss rows
+            let cumulativeBestTime = 0;
+            Array.from(allBosses).forEach(bossName => {
+                csvContent += `"${bossName}"`;
+                
+                validResults.forEach(result => {
+                    const fight = result.fights?.find(f => f.name === bossName && f.is_boss);
+                    if (fight && fight.end_time_rel !== undefined && fight.end_time_rel !== null) {
+                        csvContent += `,${formatTimestamp(fight.end_time_rel, true)}`;
+                    } else {
+                        csvContent += ',—';
+                    }
+                });
+                
+                if (validResults.length > 1) {
+                    if (bestSegments[bossName] !== undefined) {
+                        cumulativeBestTime += bestSegments[bossName];
+                        csvContent += `,${formatTimestamp(cumulativeBestTime, true)}`;
+                    } else {
+                        csvContent += ',—';
+                    }
+                }
+                
+                csvContent += '\n';
+            });
+            
+            // Add total row
+            csvContent += '"Total Run Time"';
+            validResults.forEach(result => {
+                if (result.total_duration !== undefined && result.total_duration !== null) {
+                    csvContent += `,${formatTimestamp(result.total_duration, true)}`;
+                } else {
+                    csvContent += ',—';
+                }
+            });
+            
+            if (validResults.length > 1) {
+                const theoreticalBestTime = Object.values(bestSegments).reduce((sum, time) => sum + time, 0);
+                csvContent += `,${formatTimestamp(theoreticalBestTime, true)}`;
+            }
+            
+            // Download CSV
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `wcl-comparison-${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast('CSV exported successfully!', 'success');
+        }
+
+        function shareResults() {
+            if (!currentData) {
+                showToast('No data to share', 'error');
+                return;
+            }
+            
+            const runs = collectRunData();
+            const shareData = {
+                runs: runs,
+                timestamp: new Date().toISOString()
+            };
+            
+            const shareUrl = `${window.location.origin}${window.location.pathname}?data=${encodeURIComponent(btoa(JSON.stringify(shareData)))}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'WCL Time Splits Analysis',
+                    text: 'Check out this raid performance comparison',
+                    url: shareUrl
+                }).then(() => {
+                    showToast('Shared successfully!', 'success');
+                }).catch(() => {
+                    copyToClipboard(shareUrl);
+                });
+            } else {
+                copyToClipboard(shareUrl);
+            }
+        }
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Share link copied to clipboard!', 'success');
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(text);
+                });
+            } else {
+                fallbackCopyTextToClipboard(text);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.top = '0';
+            textArea.style.left = '0';
+            textArea.style.position = 'fixed';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast('Share link copied to clipboard!', 'success');
+            } catch (err) {
+                showToast('Failed to copy link', 'error');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            
+            if (isDark) {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+            
+            document.documentElement.classList.remove('dark', 'light');
+            document.documentElement.classList.add(theme);
+        }
+
+        function showHelpModal() {
+            elements.helpModal.classList.remove('hidden');
+            elements.helpModalClose.focus();
+        }
+
+        function hideHelpModal() {
+            elements.helpModal.classList.add('hidden');
+        }
+
+        function loadSharedData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sharedData = urlParams.get('data');
+            
+            if (sharedData) {
+                try {
+                    const decoded = JSON.parse(atob(sharedData));
+                    if (decoded.runs && decoded.runs.length > 0) {
+                        elements.baseRunInput.value = decoded.runs[0] || '';
+                        updateUrlStatus(elements.baseRunInput, elements.baseRunStatus);
+                        
+                        // Add comparison runs
+                        for (let i = 1; i < decoded.runs.length && i < maxRuns; i++) {
+                            addComparisonRun();
+                            const cards = elements.comparisonRuns.querySelectorAll('.run-card');
+                            const lastCard = cards[cards.length - 1];
+                            const urlInput = lastCard.querySelector('.run-url');
+                            urlInput.value = decoded.runs[i];
+                            const statusDiv = lastCard.querySelector('.run-status');
+                            updateUrlStatus(urlInput, statusDiv);
+                        }
+                        
+                        updateAnalyzeButton();
+                        showToast('Shared data loaded!', 'success');
+                        
+                        // Clean up URL
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+                } catch (error) {
+                    console.error('Failed to load shared data:', error);
+                    showToast('Failed to load shared data', 'error');
+                }
+            }
+        }
+
+        // Event listeners
+        elements.baseRunInput.addEventListener('input', () => {
+            updateUrlStatus(elements.baseRunInput, elements.baseRunStatus);
+            updateAnalyzeButton();
         });
 
-        document.getElementById("timeline").classList.remove("hidden");
-      }
+        elements.addRunBtn.addEventListener('click', addComparisonRun);
+        elements.analyzeBtn.addEventListener('click', analyzeReports);
+        elements.themeToggle.addEventListener('click', toggleTheme);
+        elements.helpButton.addEventListener('click', showHelpModal);
+        elements.helpModalClose.addEventListener('click', hideHelpModal);
+        elements.exportCsvBtn.addEventListener('click', exportToCsv);
+        elements.shareBtn.addEventListener('click', shareResults);
 
-      function showLoading(show) {
-        document.getElementById("loading").classList.toggle("hidden", !show);
-        document.querySelector(".analyze-btn").disabled = show;
-      }
+        // Modal event listeners
+        elements.helpModal.addEventListener('click', (e) => {
+            if (e.target === elements.helpModal) {
+                hideHelpModal();
+            }
+        });
 
-      function showError(message) {
-        const errorDiv = document.getElementById("error");
-        errorDiv.textContent = message;
-        errorDiv.classList.remove("hidden");
-      }
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Help modal shortcuts
+            if (elements.helpModal.classList.contains('hidden')) {
+                if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+                    if (document.activeElement === elements.baseRunInput || 
+                        document.activeElement?.classList.contains('run-url')) {
+                        e.preventDefault();
+                        analyzeReports();
+                    }
+                } else if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+                    e.preventDefault();
+                    showHelpModal();
+                } else if (e.ctrlKey || e.metaKey) {
+                    switch (e.key.toLowerCase()) {
+                        case 'n':
+                            e.preventDefault();
+                            addComparisonRun();
+                            break;
+                        case 'd':
+                            e.preventDefault();
+                            toggleTheme();
+                            break;
+                        case 'e':
+                            e.preventDefault();
+                            exportToCsv();
+                            break;
+                    }
+                }
+            } else {
+                // Help modal is open
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    hideHelpModal();
+                }
+            }
+        });
 
-      function hideError() {
-        document.getElementById("error").classList.add("hidden");
-      }
+        // Filter event listeners
+        elements.bossFilter.addEventListener('change', applyFilters);
+        elements.deltaFilter.addEventListener('change', applyFilters);
 
-      function showResults() {
-        document.getElementById("results").classList.remove("hidden");
-      }
-
-      function hideResults() {
-        document.getElementById("results").classList.add("hidden");
-        document.getElementById("timeline").classList.add("hidden");
-      }
-
-      // Allow Enter key to trigger analysis
-      document.addEventListener("keypress", function (e) {
-        if (e.key === "Enter") {
-          analyzeReports();
+        function applyFilters() {
+            if (!currentData) return;
+            
+            const bossFilter = elements.bossFilter.value;
+            const deltaFilter = parseInt(elements.deltaFilter.value);
+            
+            const rows = elements.resultsTbody.querySelectorAll('tr');
+            
+            rows.forEach(row => {
+                const bossCell = row.querySelector('td:first-child');
+                if (!bossCell) return;
+                
+                const bossName = bossCell.textContent.trim();
+                const isTrash = bossName.includes('(Trash)');
+                const isTotalRow = bossName === 'Total Run Time';
+                
+                let shouldShow = true;
+                
+                // Boss filter
+                if (bossFilter !== 'all' && bossName !== bossFilter && !isTotalRow) {
+                    shouldShow = false;
+                }
+                
+                // Delta filter
+                if (deltaFilter > 0 && !isTotalRow) {
+                    const deltaElements = row.querySelectorAll('.delta-pill');
+                    let hasSignificantDelta = false;
+                    
+                    deltaElements.forEach(deltaEl => {
+                        const deltaText = deltaEl.textContent.trim();
+                        if (deltaText.startsWith('+') || deltaText.startsWith('-')) {
+                            const timeMatch = deltaText.match(/(\d+):(\d+)/);
+                            if (timeMatch) {
+                                const minutes = parseInt(timeMatch[1]);
+                                const seconds = parseInt(timeMatch[2]);
+                                const totalMs = (minutes * 60 + seconds) * 1000;
+                                if (totalMs >= deltaFilter) {
+                                    hasSignificantDelta = true;
+                                }
+                            }
+                        }
+                    });
+                    
+                    if (!hasSignificantDelta) {
+                        shouldShow = false;
+                    }
+                }
+                
+                row.style.display = shouldShow ? '' : 'none';
+            });
         }
-      });
+
+        // Initialize drag and drop for run cards
+        function initializeSortable() {
+            if (typeof Sortable !== 'undefined') {
+                new Sortable(elements.comparisonRuns, {
+                    handle: '.drag-handle',
+                    animation: 150,
+                    ghostClass: 'opacity-50',
+                    onEnd: function(evt) {
+                        // Update run indices and colors
+                        const cards = elements.comparisonRuns.querySelectorAll('.run-card');
+                        cards.forEach((card, index) => {
+                            card.setAttribute('data-run-index', index);
+                            const colorDot = card.querySelector('.w-3.h-3.rounded-full');
+                            if (colorDot) {
+                                colorDot.style.backgroundColor = runColors[index % runColors.length];
+                            }
+                        });
+                        
+                        showToast('Runs reordered', 'info');
+                    }
+                });
+            }
+        }
+
+        // Initialize the application
+        function init() {
+            initializeTheme();
+            loadSharedData();
+            initializeSortable();
+            updateAnalyzeButton();
+            lucide.createIcons();
+        }
+
+        // Start the application when DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
     </script>
-  </body>
+</body>
 </html>
