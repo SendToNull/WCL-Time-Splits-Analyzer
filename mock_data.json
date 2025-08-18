@@ -1,0 +1,301 @@
+{
+  "results": [
+    {
+      "title": "aq40 pump",
+      "zone": "Temple of Ahn'Qiraj",
+      "date": "August 18, 2025",
+      "total_duration": 1583000,
+      "fights": [
+        {
+          "name": "The Prophet Skeram",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 55000,
+          "duration": 55000,
+          "individual_segment_time": 55000,
+          "idle_time": null
+        },
+        {
+          "name": "Silithid Royalty",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 205000,
+          "duration": 150000,
+          "individual_segment_time": 150000,
+          "idle_time": 18000
+        },
+        {
+          "name": "Battleguard Sartura",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 309000,
+          "duration": 104000,
+          "individual_segment_time": 104000,
+          "idle_time": 12000
+        },
+        {
+          "name": "Fankriss the Unyielding",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 432000,
+          "duration": 123000,
+          "individual_segment_time": 123000,
+          "idle_time": 15000
+        },
+        {
+          "name": "Viscidus",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 503000,
+          "duration": 71000,
+          "individual_segment_time": 71000,
+          "idle_time": 8000
+        },
+        {
+          "name": "Princess Huhuran",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 711000,
+          "duration": 208000,
+          "individual_segment_time": 208000,
+          "idle_time": 25000
+        },
+        {
+          "name": "Twin Emperors",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 901000,
+          "duration": 190000,
+          "individual_segment_time": 190000,
+          "idle_time": 20000
+        },
+        {
+          "name": "Ouro",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 1332000,
+          "duration": 431000,
+          "individual_segment_time": 431000,
+          "idle_time": 45000
+        },
+        {
+          "name": "C'Thun",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 1460000,
+          "duration": 128000,
+          "individual_segment_time": 128000,
+          "idle_time": 15000
+        }
+      ],
+      "timeline_data": []
+    },
+    {
+      "title": "run 2",
+      "zone": "Temple of Ahn'Qiraj",
+      "date": "August 18, 2025",
+      "total_duration": 1591000,
+      "fights": [
+        {
+          "name": "The Prophet Skeram",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 39000,
+          "duration": 39000,
+          "individual_segment_time": 39000,
+          "idle_time": null
+        },
+        {
+          "name": "Silithid Royalty",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 186000,
+          "duration": 147000,
+          "individual_segment_time": 147000,
+          "idle_time": 15000
+        },
+        {
+          "name": "Battleguard Sartura",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 308000,
+          "duration": 122000,
+          "individual_segment_time": 122000,
+          "idle_time": 18000
+        },
+        {
+          "name": "Fankriss the Unyielding",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 413000,
+          "duration": 105000,
+          "individual_segment_time": 105000,
+          "idle_time": 12000
+        },
+        {
+          "name": "Viscidus",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 503000,
+          "duration": 90000,
+          "individual_segment_time": 90000,
+          "idle_time": 10000
+        },
+        {
+          "name": "Princess Huhuran",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 701000,
+          "duration": 198000,
+          "individual_segment_time": 198000,
+          "idle_time": 22000
+        },
+        {
+          "name": "Twin Emperors",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 884000,
+          "duration": 183000,
+          "individual_segment_time": 183000,
+          "idle_time": 18000
+        },
+        {
+          "name": "Ouro",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 1329000,
+          "duration": 445000,
+          "individual_segment_time": 445000,
+          "idle_time": 50000
+        },
+        {
+          "name": "C'Thun",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 1460000,
+          "duration": 131000,
+          "individual_segment_time": 131000,
+          "idle_time": 12000
+        }
+      ],
+      "timeline_data": []
+    },
+    {
+      "title": "GT AQ 14/08",
+      "zone": "Temple of Ahn'Qiraj",
+      "date": "August 14, 2025",
+      "total_duration": 1872000,
+      "fights": [
+        {
+          "name": "The Prophet Skeram",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 57000,
+          "duration": 57000,
+          "individual_segment_time": 57000,
+          "idle_time": null
+        },
+        {
+          "name": "Silithid Royalty",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 243000,
+          "duration": 186000,
+          "individual_segment_time": 186000,
+          "idle_time": 22000
+        },
+        {
+          "name": "Battleguard Sartura",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 348000,
+          "duration": 105000,
+          "individual_segment_time": 105000,
+          "idle_time": 15000
+        },
+        {
+          "name": "Fankriss the Unyielding",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 475000,
+          "duration": 127000,
+          "individual_segment_time": 127000,
+          "idle_time": 18000
+        },
+        {
+          "name": "Viscidus",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 566000,
+          "duration": 91000,
+          "individual_segment_time": 91000,
+          "idle_time": 12000
+        },
+        {
+          "name": "Princess Huhuran",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 790000,
+          "duration": 224000,
+          "individual_segment_time": 224000,
+          "idle_time": 28000
+        },
+        {
+          "name": "Twin Emperors",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 1063000,
+          "duration": 273000,
+          "individual_segment_time": 273000,
+          "idle_time": 35000
+        },
+        {
+          "name": "Ouro",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 1550000,
+          "duration": 487000,
+          "individual_segment_time": 487000,
+          "idle_time": 60000
+        },
+        {
+          "name": "C'Thun",
+          "is_boss": true,
+          "is_kill": true,
+          "start_time_rel": 0,
+          "end_time_rel": 1704000,
+          "duration": 154000,
+          "individual_segment_time": 154000,
+          "idle_time": 18000
+        }
+      ],
+      "timeline_data": []
+    }
+  ]
+}

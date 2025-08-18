@@ -73,28 +73,79 @@ def format_timestamp(ms, include_hours=True):
         return f"{sign}{minutes_string}:{seconds_string}"
 
 
-def get_wcl_data(report_id, api_key):
-    """Fetch fight data from WCL v1 API with multiple endpoint support."""
-    if not report_id or not report_id.strip():
-        return {"error": "Report ID cannot be empty"}
+def get_wcl_data(report_url_or_id, api_key):
+    """Fetch fight data from WCL v1 API using the correct endpoint based on URL."""
+    if not report_url_or_id or not report_url_or_id.strip():
+        return {"error": "Report URL or ID cannot be empty"}
     
-    report_id = report_id.strip()
+    report_input = report_url_or_id.strip()
     
-    # Extract report ID from URL if needed
-    if "warcraftlogs.com/reports/" in report_id:
-        try:
-            report_id = report_id.split("reports/")[1].split("#")[0].split("?")[0]
-        except IndexError:
-            return {"error": "Invalid report URL format"}
+    # Determine the correct endpoint and extract report ID using Google Apps Script logic
+    log_id = ""
+    base_url = "https://vanilla.warcraftlogs.com:443/v1/"  # Default fallback
+    
+    # Replace .cn/ with .com/ (matching Google Apps Script)
+    report_input = report_input.replace(".cn/", ".com/")
+    
+    # Check for TBC reports (not supported)
+    if "tbc.warcraftlogs" in report_input:
+        return {"error": "TBC reports are not supported. Please use the TBC version of the analyzer."}
+    
+    # Extract report ID and determine correct endpoint (matching Google Apps Script logic)
+    if "classic.warcraftlogs.com/reports/" in report_input:
+        log_id = report_input.split("classic.warcraftlogs.com/reports/")[1].split("#")[0].split("?")[0]
+        base_url = "https://classic.warcraftlogs.com:443/v1/"
+    elif "vanilla.warcraftlogs.com/reports/" in report_input:
+        log_id = report_input.split("vanilla.warcraftlogs.com/reports/")[1].split("#")[0].split("?")[0]
+        base_url = "https://vanilla.warcraftlogs.com:443/v1/"
+    elif "sod.warcraftlogs.com/reports/" in report_input:
+        log_id = report_input.split("sod.warcraftlogs.com/reports/")[1].split("#")[0].split("?")[0]
+        base_url = "https://sod.warcraftlogs.com:443/v1/"
+    elif "fresh.warcraftlogs.com/reports/" in report_input:
+        log_id = report_input.split("fresh.warcraftlogs.com/reports/")[1].split("#")[0].split("?")[0]
+        base_url = "https://fresh.warcraftlogs.com:443/v1/"
+    else:
+        # If it's just an ID, try to determine the correct endpoint by testing
+        log_id = report_input
+        # We'll try multiple endpoints as fallback
     
     # Validate report ID format
-    if not report_id.replace('-', '').replace('_', '').isalnum():
-        return {"error": f"Invalid report ID format: {report_id}"}
+    if not log_id.replace('-', '').replace('_', '').isalnum():
+        return {"error": f"Invalid report ID format: {log_id}"}
     
-    # Try multiple endpoints
+    # If we have a specific base URL from the input, use it
+    if base_url != "https://vanilla.warcraftlogs.com:443/v1/":
+        url = f"{base_url}report/fights/{log_id}?translate=true&api_key={api_key}"
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+            
+            if not data.get("error") and data.get("fights"):
+                endpoint_name = base_url.split("://")[1].split(".")[0]
+                print(f"Successfully fetched report {log_id} from {endpoint_name}.warcraftlogs.com")
+                return data
+            elif data.get("error"):
+                return {"error": data["error"]}
+                
+        except requests.exceptions.Timeout:
+            return {"error": f"Request timeout"}
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                return {"error": f"Report not found"}
+            elif e.response.status_code == 401:
+                return {"error": "Invalid API key or insufficient permissions"}
+            else:
+                return {"error": f"HTTP {e.response.status_code} error"}
+        except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
+            return {"error": f"Network/parsing error: {str(e)}"}
+    
+    # Fallback: try multiple endpoints if no specific URL was provided
     endpoints = [
-        ("classic", f"https://classic.warcraftlogs.com:443/v1/report/fights/{report_id}?translate=true&api_key={api_key}"),
-        ("fresh", f"https://fresh.warcraftlogs.com:443/v1/report/fights/{report_id}?translate=true&api_key={api_key}")
+        ("classic", f"https://classic.warcraftlogs.com:443/v1/report/fights/{log_id}?translate=true&api_key={api_key}"),
+        ("fresh", f"https://fresh.warcraftlogs.com:443/v1/report/fights/{log_id}?translate=true&api_key={api_key}"),
+        ("vanilla", f"https://vanilla.warcraftlogs.com:443/v1/report/fights/{log_id}?translate=true&api_key={api_key}"),
+        ("sod", f"https://sod.warcraftlogs.com:443/v1/report/fights/{log_id}?translate=true&api_key={api_key}")
     ]
     
     last_error = None
@@ -105,7 +156,7 @@ def get_wcl_data(report_id, api_key):
             data = response.json()
             
             if not data.get("error") and data.get("fights"):
-                print(f"Successfully fetched report {report_id} from {endpoint_name}.warcraftlogs.com")
+                print(f"Successfully fetched report {log_id} from {endpoint_name}.warcraftlogs.com")
                 return data
             elif data.get("error"):
                 last_error = data["error"]
@@ -122,7 +173,7 @@ def get_wcl_data(report_id, api_key):
         except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
             last_error = f"Network/parsing error from {endpoint_name}.warcraftlogs.com: {str(e)}"
     
-    return {"error": last_error or f"Report {report_id} not found on any WarcraftLogs endpoint"}
+    return {"error": last_error or f"Report {log_id} not found on any WarcraftLogs endpoint"}
 
 
 def find_raid_zone_times(report_data):
@@ -341,7 +392,15 @@ def calculate_deltas(data1, data2):
             base_name = fight["name"].replace(" (Trash)", "")
             if base_name in data2_boss_lookup:
                 data2_fight = data2_boss_lookup[base_name]
-                fight["delta"] = fight["end_time_rel"] - data2_fight["end_time_rel"]
+                # Boss fight delta: difference in boss kill times (end_time_rel)
+                fight["boss_delta"] = fight["end_time_rel"] - data2_fight["end_time_rel"]
+                # Individual segment delta: difference in individual segment times
+                if fight.get("individual_segment_time") and data2_fight.get("individual_segment_time"):
+                    fight["segment_delta"] = fight["individual_segment_time"] - data2_fight["individual_segment_time"]
+    
+    # Calculate total time delta
+    if data1.get("total_duration") and data2.get("total_duration"):
+        data1["total_delta"] = data1["total_duration"] - data2["total_duration"]
 
 
 # ==============================================================================
@@ -378,9 +437,9 @@ def analyze_reports():
         return jsonify({"error": "No reports provided"}), 400
 
     results = []
-    for report_id in reports:
-        if report_id and report_id.strip():
-            raw_data = get_wcl_data(report_id.strip(), api_key)
+    for report_url_or_id in reports:
+        if report_url_or_id and report_url_or_id.strip():
+            raw_data = get_wcl_data(report_url_or_id.strip(), api_key)
             processed_data = process_fights(raw_data)
             results.append(processed_data)
         else:

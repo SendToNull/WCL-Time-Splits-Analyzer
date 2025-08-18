@@ -1,937 +1,1013 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WCL Time Splits Analyzer</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a1a;
-            color: #ffffff;
-            padding: 20px;
-        }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #1a1a1a;
+        color: #ffffff;
+        padding: 20px;
+      }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #ffffff;
-            font-size: 2.5em;
-        }
+      h1 {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #ffffff;
+        font-size: 2.5em;
+      }
 
-        .input-section {
-            background-color: #2d2d2d;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-        }
+      .input-section {
+        background-color: #2d2d2d;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+      }
 
-        .input-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
+      .input-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+      }
 
-        .input-group {
-            display: flex;
-            flex-direction: column;
-        }
+      .input-group {
+        display: flex;
+        flex-direction: column;
+      }
 
-        .button-row {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
-        }
+      .button-row {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+      }
 
-        .add-run-btn {
-            background-color: #2196F3;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: background-color 0.3s;
-        }
+      .add-run-btn {
+        background-color: #2196f3;
+        color: white;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background-color 0.3s;
+      }
 
-        .add-run-btn:hover {
-            background-color: #1976D2;
-        }
+      .add-run-btn:hover {
+        background-color: #1976d2;
+      }
 
-        .add-run-btn:disabled {
-            background-color: #666;
-            cursor: not-allowed;
-        }
+      .add-run-btn:disabled {
+        background-color: #666;
+        cursor: not-allowed;
+      }
 
-        label {
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #cccccc;
-        }
+      label {
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #cccccc;
+      }
 
-        input[type="text"] {
-            padding: 10px;
-            border: 1px solid #555;
-            border-radius: 4px;
-            background-color: #3d3d3d;
-            color: #ffffff;
-            font-size: 14px;
-        }
+      input[type="text"] {
+        padding: 10px;
+        border: 1px solid #555;
+        border-radius: 4px;
+        background-color: #3d3d3d;
+        color: #ffffff;
+        font-size: 14px;
+      }
 
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #4CAF50;
-        }
+      input[type="text"]:focus {
+        outline: none;
+        border-color: #4caf50;
+      }
 
-        .analyze-btn {
-            background-color: #4CAF50;
-            color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: background-color 0.3s;
-        }
+      .analyze-btn {
+        background-color: #4caf50;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background-color 0.3s;
+      }
 
-        .analyze-btn:hover {
-            background-color: #45a049;
-        }
+      .analyze-btn:hover {
+        background-color: #45a049;
+      }
 
-        .analyze-btn:disabled {
-            background-color: #666;
-            cursor: not-allowed;
-        }
+      .analyze-btn:disabled {
+        background-color: #666;
+        cursor: not-allowed;
+      }
 
-        .loading {
-            text-align: center;
-            padding: 20px;
-            font-size: 18px;
-            color: #cccccc;
-        }
+      .loading {
+        text-align: center;
+        padding: 20px;
+        font-size: 18px;
+        color: #cccccc;
+      }
 
-        .error {
-            background-color: #d32f2f;
-            color: white;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 20px 0;
-        }
+      .error {
+        background-color: #d32f2f;
+        color: white;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 20px 0;
+      }
 
-        .results-container {
-            background-color: #2d2d2d;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-top: 30px;
+      .results-container {
+        background-color: #2d2d2d;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-top: 30px;
+      }
+
+      .results-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      .results-table th {
+        background-color: #3d3d3d;
+        padding: 12px 8px;
+        text-align: center;
+        font-weight: bold;
+        border-bottom: 2px solid #555;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .results-table th.boss-header {
+        text-align: left;
+        padding-left: 15px;
+      }
+
+      .results-table td {
+        padding: 8px;
+        text-align: center;
+        border-bottom: 1px solid #444;
+      }
+
+      .results-table tr:nth-child(even) {
+        background-color: #333;
+      }
+
+      .results-table tr:hover {
+        background-color: #404040;
+      }
+
+      .boss-name {
+        text-align: left !important;
+        font-weight: bold;
+        padding-left: 15px;
+        white-space: nowrap;
+      }
+
+      /* Responsive table layout */
+      .results-table {
+        table-layout: fixed;
+        width: 100%;
+      }
+
+      /* Dynamic boss column width will be set by JavaScript */
+      .results-table th:first-child,
+      .results-table td:first-child {
+        /* Width will be set dynamically */
+      }
+
+      /* Keep all columns (except boss) centered and auto-sized */
+      .results-table th:not(:first-child),
+      .results-table td:not(:first-child) {
+        text-align: center;
+      }
+
+      .delta-positive {
+        color: #4caf50;
+      }
+
+      .delta-negative {
+        color: #f44336;
+      }
+
+      .delta-neutral {
+        color: #cccccc;
+      }
+
+      .timeline-container {
+        margin-top: 30px;
+        background-color: #2d2d2d;
+        padding: 20px;
+        border-radius: 8px;
+      }
+
+      .timeline-header {
+        margin-bottom: 20px;
+        font-size: 18px;
+        font-weight: bold;
+      }
+
+      .timeline-scale {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 12px;
+        color: #cccccc;
+      }
+
+      .timeline-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+        height: 35px;
+      }
+
+      .timeline-label {
+        width: 120px;
+        font-size: 14px;
+        text-align: right;
+        padding-right: 10px;
+        color: #cccccc;
+      }
+
+      .timeline-bar-container {
+        flex: 1;
+        height: 30px;
+        background-color: #1a1a1a;
+        border: 1px solid #555;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .timeline-segment {
+        height: 100%;
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: bold;
+        color: white;
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        padding: 0 4px;
+        cursor: pointer;
+      }
+
+      .timeline-segment.hide-text {
+        font-size: 0;
+        text-indent: -9999px;
+      }
+
+      .timeline-segment.hide-text:hover {
+        font-size: 11px;
+        text-indent: 0;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 100;
+      }
+
+      .segment-boss {
+        background-color: #d32f2f;
+      }
+
+      .segment-trash {
+        background-color: #666;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      @media (max-width: 768px) {
+        .input-grid {
+          grid-template-columns: 1fr;
         }
 
         .results-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
+          font-size: 12px;
         }
 
-        .results-table th {
-            background-color: #3d3d3d;
-            padding: 12px 8px;
-            text-align: center;
-            font-weight: bold;
-            border-bottom: 2px solid #555;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .results-table th.boss-header {
-            text-align: left;
-            padding-left: 15px;
-        }
-
+        .results-table th,
         .results-table td {
-            padding: 8px;
-            text-align: center;
-            border-bottom: 1px solid #444;
-        }
-
-        .results-table tr:nth-child(even) {
-            background-color: #333;
-        }
-
-        .results-table tr:hover {
-            background-color: #404040;
-        }
-
-        .boss-name {
-            text-align: left !important;
-            font-weight: bold;
-            padding-left: 15px;
-            white-space: nowrap;
-        }
-
-        /* Responsive table layout */
-        .results-table {
-            table-layout: fixed;
-            width: 100%;
-        }
-
-        /* Dynamic boss column width will be set by JavaScript */
-        .results-table th:first-child,
-        .results-table td:first-child {
-            /* Width will be set dynamically */
-        }
-
-        /* Keep all columns (except boss) centered and auto-sized */
-        .results-table th:not(:first-child),
-        .results-table td:not(:first-child) {
-            text-align: center;
-        }
-
-        .delta-positive {
-            color: #4CAF50;
-        }
-
-        .delta-negative {
-            color: #f44336;
-        }
-
-        .delta-neutral {
-            color: #cccccc;
-        }
-
-        .timeline-container {
-            margin-top: 30px;
-            background-color: #2d2d2d;
-            padding: 20px;
-            border-radius: 8px;
-        }
-
-        .timeline-header {
-            margin-bottom: 20px;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        .timeline-scale {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 12px;
-            color: #cccccc;
-        }
-
-        .timeline-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-            height: 35px;
+          padding: 6px 4px;
         }
 
         .timeline-label {
-            width: 120px;
-            font-size: 14px;
-            text-align: right;
-            padding-right: 10px;
-            color: #cccccc;
+          width: 80px;
+          font-size: 10px;
         }
-
-        .timeline-bar-container {
-            flex: 1;
-            height: 30px;
-            background-color: #1a1a1a;
-            border: 1px solid #555;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .timeline-segment {
-            height: 100%;
-            position: absolute;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            padding: 0 4px;
-            cursor: pointer;
-        }
-
-        .timeline-segment.hide-text {
-            font-size: 0;
-            text-indent: -9999px;
-        }
-
-        .timeline-segment.hide-text:hover {
-            font-size: 11px;
-            text-indent: 0;
-            background-color: rgba(0,0,0,0.8);
-            z-index: 100;
-        }
-
-        .segment-boss {
-            background-color: #d32f2f;
-        }
-
-        .segment-trash {
-            background-color: #666;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        @media (max-width: 768px) {
-            .input-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .results-table {
-                font-size: 12px;
-            }
-            
-            .results-table th,
-            .results-table td {
-                padding: 6px 4px;
-            }
-            
-            .timeline-label {
-                width: 80px;
-                font-size: 10px;
-            }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>WCL Time Splits Analyzer</h1>
-        
-        <div class="input-section">
-            <div id="input-container">
-                <div class="input-row">
-                    <div class="input-group">
-                        <label for="report1">Base Run (Report ID or URL):</label>
-                        <input type="text" id="report1" placeholder="e.g., QCpkw3Xd7zx2nyGD or full WCL URL">
-                    </div>
-                </div>
-                <div class="input-row" id="comparison-runs">
-                    <div class="input-group">
-                        <label for="report2">Comparison Run 1:</label>
-                        <input type="text" id="report2" placeholder="Optional comparison report">
-                    </div>
-                </div>
+      <h1>WCL Time Splits Analyzer</h1>
+
+      <div class="input-section">
+        <div id="input-container">
+          <div class="input-row">
+            <div class="input-group">
+              <label for="report1">Base Run (Full WCL URL):</label>
+              <input
+                type="text"
+                id="report1"
+                placeholder="e.g., https://fresh.warcraftlogs.com/reports/ZC1w86HjxWMTdPrt"
+              />
             </div>
-            <div class="button-row">
-                <button class="add-run-btn" onclick="addRunInput()">+ Add Run</button>
-                <button class="analyze-btn" onclick="analyzeReports()">Analyze Reports</button>
+          </div>
+          <div class="input-row" id="comparison-runs">
+            <div class="input-group">
+              <label for="report2">Comparison Run 1:</label>
+              <input
+                type="text"
+                id="report2"
+                placeholder="e.g., https://classic.warcraftlogs.com/reports/xkTQz4GyjJ6XFbhw"
+              />
             </div>
+          </div>
         </div>
-
-        <div id="loading" class="loading hidden">
-            Analyzing reports... This may take a few moments.
+        <div class="button-row">
+          <button class="add-run-btn" onclick="addRunInput()">+ Add Run</button>
+          <button class="analyze-btn" onclick="analyzeReports()">
+            Analyze Reports
+          </button>
         </div>
+      </div>
 
-        <div id="error" class="error hidden"></div>
+      <div id="loading" class="loading hidden">
+        Analyzing reports... This may take a few moments.
+      </div>
 
-        <div id="results" class="results-container hidden">
-            <table class="results-table">
-                <thead id="results-header">
-                    <!-- Dynamic header will be inserted here -->
-                </thead>
-                <tbody id="results-body">
-                    <!-- Dynamic results will be inserted here -->
-                </tbody>
-            </table>
-        </div>
+      <div id="error" class="error hidden"></div>
 
-        <div id="timeline" class="timeline-container hidden">
-            <div class="timeline-header">Timeline Visualization</div>
-            <div id="timeline-content">
-                <!-- Dynamic timeline will be inserted here -->
-            </div>
-        </div>
+      <div id="results" class="results-container hidden">
+        <table class="results-table">
+          <thead id="results-header"></thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+
+      <div id="timeline" class="timeline-container hidden">
+        <div class="timeline-header">Timeline Visualization</div>
+        <div id="timeline-content"></div>
+      </div>
     </div>
 
     <script>
-        function extractReportId(input) {
-            if (!input || input.trim() === '') return '';
-            
-            const trimmed = input.trim();
-            
-            // Check if it's already just an ID
-            if (trimmed.length === 16 && /^[a-zA-Z0-9]+$/.test(trimmed)) {
-                return trimmed;
-            }
-            
-            // Extract from various WCL URL formats
-            const patterns = [
-                /classic\.warcraftlogs\.com\/reports\/([a-zA-Z0-9]+)/,
-                /vanilla\.warcraftlogs\.com\/reports\/([a-zA-Z0-9]+)/,
-                /sod\.warcraftlogs\.com\/reports\/([a-zA-Z0-9]+)/,
-                /fresh\.warcraftlogs\.com\/reports\/([a-zA-Z0-9]+)/,
-                /warcraftlogs\.com\/reports\/([a-zA-Z0-9]+)/
-            ];
-            
-            for (const pattern of patterns) {
-                const match = trimmed.match(pattern);
-                if (match) return match[1];
-            }
-            
-            return trimmed;
+      function formatTimestamp(ms, includeHours = true) {
+        // Handle null/undefined values for idle time
+        if (ms === null || ms === undefined) {
+          return "---";
         }
 
-        function formatTimestamp(ms, includeHours = true) {
-            // Handle null/undefined values for idle time
-            if (ms === null || ms === undefined) {
-                return "---";
-            }
-            
-            // Exact Google Apps Script getStringForTimeStamp logic:
-            // var delta = Math.abs(timeStamp) / 1000;
-            // var days = Math.floor(delta / 86400);
-            // delta -= days * 86400;
-            // var hours = Math.floor(delta / 3600) % 24;
-            // delta -= hours * 3600;
-            // var minutes = Math.floor(delta / 60) % 60;
-            // delta -= minutes * 60;
-            // var seconds = Math.floor(delta % 60);
-            
-            let delta = Math.abs(ms) / 1000;
-            const days = Math.floor(delta / 86400);
-            delta -= days * 86400;
-            const hours = Math.floor(delta / 3600) % 24;
-            delta -= hours * 3600;
-            const minutes = Math.floor(delta / 60) % 60;
-            delta -= minutes * 60;
-            const seconds = Math.floor(delta % 60);
+        // Exact Google Apps Script getStringForTimeStamp logic:
+        // var delta = Math.abs(timeStamp) / 1000;
+        // var days = Math.floor(delta / 86400);
+        // delta -= days * 86400;
+        // var hours = Math.floor(delta / 3600) % 24;
+        // delta -= hours * 3600;
+        // var minutes = Math.floor(delta / 60) % 60;
+        // delta -= minutes * 60;
+        // var seconds = Math.floor(delta % 60);
 
-            // Format with leading zeros exactly like Google Apps Script
-            let secondsString = '';
-            if (seconds < 10)
-                secondsString = '0' + seconds.toString();
-            else
-                secondsString = seconds.toString();
+        let delta = Math.abs(ms) / 1000;
+        const days = Math.floor(delta / 86400);
+        delta -= days * 86400;
+        const hours = Math.floor(delta / 3600) % 24;
+        delta -= hours * 3600;
+        const minutes = Math.floor(delta / 60) % 60;
+        delta -= minutes * 60;
+        const seconds = Math.floor(delta % 60);
 
-            let minutesString = '';
-            if (minutes < 10)
-                minutesString = '0' + minutes.toString();
-            else
-                minutesString = minutes.toString();
+        // Format with leading zeros exactly like Google Apps Script
+        let secondsString = "";
+        if (seconds < 10) secondsString = "0" + seconds.toString();
+        else secondsString = seconds.toString();
 
-            if (includeHours)
-                return hours + ":" + minutesString + ":" + secondsString;
-            else
-                return minutesString + ":" + secondsString;
+        let minutesString = "";
+        if (minutes < 10) minutesString = "0" + minutes.toString();
+        else minutesString = minutes.toString();
+
+        if (includeHours)
+          return hours + ":" + minutesString + ":" + secondsString;
+        else return minutesString + ":" + secondsString;
+      }
+
+      function formatDelta(delta) {
+        if (delta === null || delta === undefined) return "";
+
+        const formatted = formatTimestamp(Math.abs(delta), false);
+        if (delta > 0) {
+          return `+${formatted}`;
+        } else if (delta < 0) {
+          return `-${formatted}`;
+        } else {
+          return formatted;
+        }
+      }
+
+      function getDeltaClass(delta) {
+        if (delta === null || delta === undefined) return "delta-neutral";
+        if (delta > 0) return "delta-negative";
+        if (delta < 0) return "delta-positive";
+        return "delta-neutral";
+      }
+
+      function checkTextFits(text, widthPx) {
+        // Create a temporary element to measure text width
+        const tempElement = document.createElement("span");
+        tempElement.style.visibility = "hidden";
+        tempElement.style.position = "absolute";
+        tempElement.style.fontSize = "11px";
+        tempElement.style.fontWeight = "bold";
+        tempElement.style.fontFamily =
+          "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        tempElement.textContent = text;
+        document.body.appendChild(tempElement);
+
+        const textWidth = tempElement.offsetWidth;
+        document.body.removeChild(tempElement);
+
+        // Add some padding for safety
+        return textWidth + 8 <= widthPx;
+      }
+
+      function abbreviateName(name) {
+        // Common boss name abbreviations
+        const abbreviations = {
+          "The Prophet Skeram": "Skeram",
+          "Silithid Royalty": "Bug Trio",
+          "Battleguard Sartura": "Sartura",
+          "Fankriss the Unyielding": "Fankriss",
+          Viscidus: "Visc",
+          "Princess Huhuran": "Huhu",
+          "Twin Emperors": "Twins",
+          Ouro: "Ouro",
+          "C'Thun": "C'Thun",
+        };
+
+        // Return abbreviation if available, otherwise try to shorten
+        if (abbreviations[name]) {
+          return abbreviations[name];
         }
 
-        function formatDelta(delta) {
-            if (delta === null || delta === undefined) return '';
-            
-            const formatted = formatTimestamp(Math.abs(delta), false);
-            if (delta > 0) {
-                return `+${formatted}`;
-            } else if (delta < 0) {
-                return `-${formatted}`;
-            } else {
-                return formatted;
-            }
+        // Generic shortening - take first word or first few characters
+        const words = name.split(" ");
+        if (words.length > 1) {
+          return words[0];
         }
 
-        function getDeltaClass(delta) {
-            if (delta === null || delta === undefined) return 'delta-neutral';
-            if (delta > 0) return 'delta-negative';
-            if (delta < 0) return 'delta-positive';
-            return 'delta-neutral';
+        // If single word, truncate if too long
+        if (name.length > 8) {
+          return name.substring(0, 6) + "...";
         }
 
-        function checkTextFits(text, widthPx) {
-            // Create a temporary element to measure text width
-            const tempElement = document.createElement('span');
-            tempElement.style.visibility = 'hidden';
-            tempElement.style.position = 'absolute';
-            tempElement.style.fontSize = '11px';
-            tempElement.style.fontWeight = 'bold';
-            tempElement.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
-            tempElement.textContent = text;
-            document.body.appendChild(tempElement);
-            
-            const textWidth = tempElement.offsetWidth;
-            document.body.removeChild(tempElement);
-            
-            // Add some padding for safety
-            return textWidth + 8 <= widthPx;
+        return name;
+      }
+
+      async function analyzeReports() {
+        const reportUrls = [];
+        for (let i = 1; i <= runCounter; i++) {
+          const input = document.getElementById(`report${i}`);
+          if (input && input.value && input.value.trim()) {
+            reportUrls.push(input.value.trim());
+          }
         }
 
-        function abbreviateName(name) {
-            // Common boss name abbreviations
-            const abbreviations = {
-                'The Prophet Skeram': 'Skeram',
-                'Silithid Royalty': 'Bug Trio',
-                'Battleguard Sartura': 'Sartura',
-                'Fankriss the Unyielding': 'Fankriss',
-                'Viscidus': 'Visc',
-                'Princess Huhuran': 'Huhu',
-                'Twin Emperors': 'Twins',
-                'Ouro': 'Ouro',
-                "C'Thun": "C'Thun"
-            };
-            
-            // Return abbreviation if available, otherwise try to shorten
-            if (abbreviations[name]) {
-                return abbreviations[name];
-            }
-            
-            // Generic shortening - take first word or first few characters
-            const words = name.split(' ');
-            if (words.length > 1) {
-                return words[0];
-            }
-            
-            // If single word, truncate if too long
-            if (name.length > 8) {
-                return name.substring(0, 6) + '...';
-            }
-            
-            return name;
+        if (reportUrls.length === 0) {
+          showError("Please enter at least one WCL report URL.");
+          return;
         }
 
-        async function analyzeReports() {
-            const reportIds = [];
-            for (let i = 1; i <= runCounter; i++) {
-                const input = document.getElementById(`report${i}`);
-                if (input && input.value) {
-                    const reportId = extractReportId(input.value);
-                    if (reportId) {
-                        reportIds.push(reportId);
-                    }
-                }
-            }
-
-            if (reportIds.length === 0) {
-                showError('Please enter at least one report ID or URL.');
-                return;
-            }
-
-            showLoading(true);
-            hideError();
-            hideResults();
-
-            try {
-                const response = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        reports: reportIds
-                    })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'Failed to analyze reports');
-                }
-
-                displayResults(data);
-                displayTimeline(data);
-
-            } catch (error) {
-                console.error('Error:', error);
-                showError(`Error analyzing reports: ${error.message}`);
-            } finally {
-                showLoading(false);
-            }
+        // Validate URLs
+        for (const url of reportUrls) {
+          if (!url.includes("warcraftlogs.com/reports/")) {
+            showError(
+              "Please enter valid WarcraftLogs URLs (e.g., https://fresh.warcraftlogs.com/reports/...)"
+            );
+            return;
+          }
         }
 
-        let runCounter = 2;
-        const maxRuns = 10;
+        showLoading(true);
+        hideError();
+        hideResults();
 
-        function addRunInput() {
-            if (runCounter >= maxRuns) {
-                showError(`Maximum of ${maxRuns} runs allowed.`);
-                return;
-            }
+        try {
+          const response = await fetch("/api/analyze", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              reports: reportUrls,
+            }),
+          });
 
-            runCounter++;
-            const comparisonRuns = document.getElementById('comparison-runs');
-            
-            const newInputGroup = document.createElement('div');
-            newInputGroup.className = 'input-group';
-            newInputGroup.innerHTML = `
-                <label for="report${runCounter}">Comparison Run ${runCounter - 1}:</label>
-                <input type="text" id="report${runCounter}" placeholder="Optional comparison report">
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || "Failed to analyze reports");
+          }
+
+          displayResults(data);
+          displayTimeline(data);
+        } catch (error) {
+          console.error("Error:", error);
+          showError(`Error analyzing reports: ${error.message}`);
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      let runCounter = 2;
+      const maxRuns = 10;
+
+      function addRunInput() {
+        if (runCounter >= maxRuns) {
+          showError(`Maximum of ${maxRuns} runs allowed.`);
+          return;
+        }
+
+        runCounter++;
+        const comparisonRuns = document.getElementById("comparison-runs");
+
+        const newInputGroup = document.createElement("div");
+        newInputGroup.className = "input-group";
+        newInputGroup.innerHTML = `
+                <label for="report${runCounter}">Comparison Run ${
+          runCounter - 1
+        }:</label>
+                <input type="text" id="report${runCounter}" placeholder="Full WCL URL (e.g., https://fresh.warcraftlogs.com/reports/...)">
             `;
-            
-            comparisonRuns.appendChild(newInputGroup);
 
-            // Disable the add button if we've reached the maximum
-            if (runCounter >= maxRuns) {
-                document.querySelector('.add-run-btn').disabled = true;
-            }
+        comparisonRuns.appendChild(newInputGroup);
+
+        // Disable the add button if we've reached the maximum
+        if (runCounter >= maxRuns) {
+          document.querySelector(".add-run-btn").disabled = true;
+        }
+      }
+
+      function calculateTextWidth(
+        text,
+        fontSize = "14px",
+        fontWeight = "bold"
+      ) {
+        // Create a temporary element to measure text width
+        const tempElement = document.createElement("span");
+        tempElement.style.visibility = "hidden";
+        tempElement.style.position = "absolute";
+        tempElement.style.fontSize = fontSize;
+        tempElement.style.fontWeight = fontWeight;
+        tempElement.style.fontFamily =
+          "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        tempElement.textContent = text;
+        document.body.appendChild(tempElement);
+
+        const textWidth = tempElement.offsetWidth;
+        document.body.removeChild(tempElement);
+
+        return textWidth;
+      }
+
+      function displayResults(data) {
+        const header = document.getElementById("results-header");
+        const body = document.getElementById("results-body");
+
+        // Clear existing content
+        header.innerHTML = "";
+        body.innerHTML = "";
+
+        if (!data.results || data.results.length === 0) {
+          showError("No valid results found in the reports.");
+          return;
         }
 
-        function calculateTextWidth(text, fontSize = '14px', fontWeight = 'bold') {
-            // Create a temporary element to measure text width
-            const tempElement = document.createElement('span');
-            tempElement.style.visibility = 'hidden';
-            tempElement.style.position = 'absolute';
-            tempElement.style.fontSize = fontSize;
-            tempElement.style.fontWeight = fontWeight;
-            tempElement.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
-            tempElement.textContent = text;
-            document.body.appendChild(tempElement);
-            
-            const textWidth = tempElement.offsetWidth;
-            document.body.removeChild(tempElement);
-            
-            return textWidth;
+        // Filter out results with errors
+        const validResults = data.results.filter(
+          (result) => result && !result.error
+        );
+        if (validResults.length === 0) {
+          showError("No valid results found in the reports.");
+          return;
         }
 
-        function displayResults(data) {
-            const header = document.getElementById('results-header');
-            const body = document.getElementById('results-body');
-            
-            // Clear existing content
-            header.innerHTML = '';
-            body.innerHTML = '';
+        // Add responsive CSS class based on number of runs
+        const resultsTable = document.querySelector(".results-table");
+        if (validResults.length === 1) {
+          resultsTable.classList.add("single-run");
+          resultsTable.classList.remove("multi-run");
+        } else {
+          resultsTable.classList.add("multi-run");
+          resultsTable.classList.remove("single-run");
+        }
 
-            if (!data.results || data.results.length === 0) {
-                showError('No valid results found in the reports.');
-                return;
-            }
-
-            // Filter out results with errors
-            const validResults = data.results.filter(result => result && !result.error);
-            if (validResults.length === 0) {
-                showError('No valid results found in the reports.');
-                return;
-            }
-
-            // Add responsive CSS class based on number of runs
-            const resultsTable = document.querySelector('.results-table');
-            if (validResults.length === 1) {
-                resultsTable.classList.add('single-run');
-                resultsTable.classList.remove('multi-run');
-            } else {
-                resultsTable.classList.add('multi-run');
-                resultsTable.classList.remove('single-run');
-            }
-
-            // Get all unique boss names to calculate optimal column width
-            const allBosses = new Set();
-            validResults.forEach(result => {
-                if (result.fights) {
-                    result.fights.forEach(fight => {
-                        // Only include boss fights, not trash
-                        if (fight.is_boss && !fight.name.includes('(Trash)')) {
-                            allBosses.add(fight.name);
-                        }
-                    });
-                }
+        // Get all unique boss names to calculate optimal column width
+        const allBosses = new Set();
+        validResults.forEach((result) => {
+          if (result.fights) {
+            result.fights.forEach((fight) => {
+              // Only include boss fights, not trash
+              if (fight.is_boss && !fight.name.includes("(Trash)")) {
+                allBosses.add(fight.name);
+              }
             });
+          }
+        });
 
-            // Add "Total Run Time" to the list for width calculation
-            allBosses.add("Total Run Time");
+        // Add "Total Run Time" to the list for width calculation
+        allBosses.add("Total Run Time");
 
-            // Calculate the optimal width for the boss column
-            let maxBossNameWidth = calculateTextWidth("Boss"); // Start with header width
-            Array.from(allBosses).forEach(bossName => {
-                const width = calculateTextWidth(bossName);
-                if (width > maxBossNameWidth) {
-                    maxBossNameWidth = width;
-                }
-            });
+        // Calculate the optimal width for the boss column
+        let maxBossNameWidth = calculateTextWidth("Boss"); // Start with header width
+        Array.from(allBosses).forEach((bossName) => {
+          const width = calculateTextWidth(bossName);
+          if (width > maxBossNameWidth) {
+            maxBossNameWidth = width;
+          }
+        });
 
-            // Add padding (15px left + 8px right + some extra space)
-            const bossColumnWidth = maxBossNameWidth + 30;
+        // Add padding (15px left + 8px right + some extra space)
+        const bossColumnWidth = maxBossNameWidth + 30;
 
-            // Set the dynamic width for the boss column
-            const style = document.createElement('style');
-            style.textContent = `
+        // Set the dynamic width for the boss column
+        const style = document.createElement("style");
+        style.textContent = `
                 .results-table th:first-child,
                 .results-table td:first-child {
                     width: ${bossColumnWidth}px;
                 }
             `;
-            document.head.appendChild(style);
+        document.head.appendChild(style);
 
-            // Create header
-            const headerRow = document.createElement('tr');
-            headerRow.innerHTML = '<th class="boss-header">Boss</th>';
-            
-            validResults.forEach((result, index) => {
-                const title = result.title || `Run ${index + 1}`;
-                headerRow.innerHTML += `<th>${title}</th>`;
-            });
-            
-            // Add Best Segments column only if multiple runs
-            if (validResults.length > 1) {
-                headerRow.innerHTML += '<th style="color: #FFD700;">Best Segments</th>';
-            }
-            
-            header.appendChild(headerRow);
+        // Create header
+        const headerRow = document.createElement("tr");
+        headerRow.innerHTML = '<th class="boss-header">Boss</th>';
 
-            // Calculate best segments and theoretical best time
-            const bestSegments = {};
-            const bestSegmentsCumulative = {};
-            let theoreticalBestTime = 0;
-            let showBestSegments = validResults.length > 1; // Only show if multiple runs
-
-            if (showBestSegments) {
-                // Find the best individual segment time for each boss across all runs
-                Array.from(allBosses).forEach(bossName => {
-                    let bestSegmentTime = null;
-                    let bestCumulativeTime = null;
-                    let bestRunIndex = -1;
-                    
-                    validResults.forEach((result, index) => {
-                        const fight = result.fights?.find(f => f.name === bossName && f.is_boss);
-                        if (fight && fight.individual_segment_time !== undefined && fight.individual_segment_time !== null) {
-                            if (bestSegmentTime === null || fight.individual_segment_time < bestSegmentTime) {
-                                bestSegmentTime = fight.individual_segment_time;
-                                bestCumulativeTime = fight.start_time_rel; // Store the cumulative time for display
-                                bestRunIndex = index;
-                            }
-                        }
-                    });
-                    
-                    if (bestSegmentTime !== null) {
-                        bestSegments[bossName] = bestSegmentTime; // For total calculation
-                        bestSegmentsCumulative[bossName] = bestCumulativeTime; // For individual display
-                        theoreticalBestTime += bestSegmentTime; // Sum of all best individual segments
-                        console.log(`Best ${bossName} segment: ${formatTimestamp(bestSegmentTime, true)} (cumulative: ${formatTimestamp(bestCumulativeTime, true)}) from run ${bestRunIndex + 1}`);
-                    }
-                });
-                
-                console.log(`Theoretical best total time: ${formatTimestamp(theoreticalBestTime, true)}`);
-            }
-
-            // Create rows for each boss (excluding "Total Run Time" which we'll add separately)
-            Array.from(allBosses).forEach(bossName => {
-                if (bossName === "Total Run Time") return; // Skip, we'll add this separately
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `<td class="boss-name">${bossName}</td>`;
-
-                const baseFight = validResults[0].fights?.find(f => f.name === bossName && f.is_boss);
-                const baseTime = baseFight ? baseFight.start_time_rel : null; // Use start_time_rel for cumulative time comparisons
-
-                validResults.forEach((result, index) => {
-                    const fight = result.fights?.find(f => f.name === bossName && f.is_boss);
-                    if (fight && fight.start_time_rel !== undefined && fight.start_time_rel !== null) {
-                        const timeStr = formatTimestamp(fight.start_time_rel, true); // Use start_time_rel for cumulative times
-                        if (index === 0) {
-                            row.innerHTML += `<td>${timeStr}</td>`;
-                        } else {
-                            const delta = baseTime !== null ? fight.start_time_rel - baseTime : null;
-                            const deltaStr = formatDelta(delta);
-                            const deltaClass = getDeltaClass(delta);
-                            row.innerHTML += `<td>${timeStr}<br><span class="${deltaClass}">${deltaStr}</span></td>`;
-                        }
-                    } else {
-                        row.innerHTML += '<td>-</td>';
-                    }
-                });
-
-                // Add best segment time only if multiple runs
-                if (showBestSegments) {
-                    if (bestSegmentsCumulative[bossName] !== undefined) {
-                        const bestTimeStr = formatTimestamp(bestSegmentsCumulative[bossName], true);
-                        // For cumulative times, compare against the base run's cumulative time
-                        const delta = baseTime !== null ? bestSegmentsCumulative[bossName] - baseTime : null;
-                        const deltaStr = formatDelta(delta);
-                        const deltaClass = getDeltaClass(delta);
-                        row.innerHTML += `<td style="color: #FFD700;">${bestTimeStr}<br><span class="${deltaClass}">${deltaStr}</span></td>`;
-                    } else {
-                        row.innerHTML += '<td style="color: #FFD700;">-</td>';
-                    }
-                }
-
-                body.appendChild(row);
-            });
-
-            // Add total time row
-            const totalRow = document.createElement('tr');
-            totalRow.innerHTML = '<td class="boss-name"><strong>Total Run Time</strong></td>';
-            
-            const baseTotal = validResults[0].total_duration;
-            validResults.forEach((result, index) => {
-                if (result.total_duration !== undefined && result.total_duration !== null) {
-                    const timeStr = formatTimestamp(result.total_duration, true);
-                    if (index === 0) {
-                        totalRow.innerHTML += `<td><strong>${timeStr}</strong></td>`;
-                    } else {
-                        const delta = result.total_duration - baseTotal;
-                        const deltaStr = formatDelta(delta);
-                        const deltaClass = getDeltaClass(delta);
-                        totalRow.innerHTML += `<td><strong>${timeStr}</strong><br><span class="${deltaClass}">${deltaStr}</span></td>`;
-                    }
-                } else {
-                    totalRow.innerHTML += '<td><strong>-</strong></td>';
-                }
-            });
-            
-            // Add theoretical best time only if multiple runs
-            if (showBestSegments) {
-                const theoreticalBestStr = formatTimestamp(theoreticalBestTime, true);
-                const theoreticalDelta = theoreticalBestTime - baseTotal;
-                const theoreticalDeltaStr = formatDelta(theoreticalDelta);
-                const theoreticalDeltaClass = getDeltaClass(theoreticalDelta);
-                totalRow.innerHTML += `<td style="color: #FFD700;"><strong>${theoreticalBestStr}</strong><br><span class="${theoreticalDeltaClass}">${theoreticalDeltaStr}</span></td>`;
-            }
-            
-            body.appendChild(totalRow);
-
-            showResults();
-        }
-
-        function displayTimeline(data) {
-            const timelineContent = document.getElementById('timeline-content');
-            timelineContent.innerHTML = '';
-
-            if (!data.results || data.results.length === 0) return;
-
-            // Filter out results with errors
-            const validResults = data.results.filter(result => result && !result.error);
-            if (validResults.length === 0) return;
-
-            // Find the maximum time across all runs for scaling
-            let maxTime = 0;
-            validResults.forEach(result => {
-                if (result.total_duration > maxTime) {
-                    maxTime = result.total_duration;
-                }
-            });
-
-            // Create time scale
-            const scaleDiv = document.createElement('div');
-            scaleDiv.className = 'timeline-scale';
-            const scalePoints = 10;
-            for (let i = 0; i <= scalePoints; i++) {
-                const time = (maxTime * i) / scalePoints;
-                const span = document.createElement('span');
-                span.textContent = formatTimestamp(time, true);
-                scaleDiv.appendChild(span);
-            }
-            timelineContent.appendChild(scaleDiv);
-
-            // Create timeline rows for each run
-            validResults.forEach((result, index) => {
-                const row = document.createElement('div');
-                row.className = 'timeline-row';
-
-                const label = document.createElement('div');
-                label.className = 'timeline-label';
-                label.textContent = result.title || `Run ${index + 1}`;
-                row.appendChild(label);
-
-                const barContainer = document.createElement('div');
-                barContainer.className = 'timeline-bar-container';
-
-                if (result.timeline_data) {
-                    result.timeline_data.forEach(segment => {
-                        const segmentDiv = document.createElement('div');
-                        segmentDiv.className = `timeline-segment ${segment.is_boss ? 'segment-boss' : 'segment-trash'}`;
-                        
-                        const leftPercent = (segment.start / maxTime) * 100;
-                        const widthPercent = ((segment.end - segment.start) / maxTime) * 100;
-                        
-                        segmentDiv.style.left = `${leftPercent}%`;
-                        segmentDiv.style.width = `${widthPercent}%`;
-                        
-                        // Use "Trash" for non-boss segments, full name for bosses
-                        const displayName = segment.is_boss ? segment.name : 'Trash';
-                        
-                        segmentDiv.title = `${segment.name}: ${formatTimestamp(segment.start)} - ${formatTimestamp(segment.end)}`;
-                        
-                        barContainer.appendChild(segmentDiv);
-                        
-                        // Smart text display logic - run after element is added to DOM
-                        setTimeout(() => {
-                            const segmentWidthPx = segmentDiv.offsetWidth;
-                            const textFits = checkTextFits(displayName, segmentWidthPx);
-                            
-                            if (textFits) {
-                                segmentDiv.textContent = displayName;
-                            } else {
-                                // Try abbreviation for boss names
-                                if (segment.is_boss) {
-                                    const abbreviated = abbreviateName(displayName);
-                                    const abbreviatedFits = checkTextFits(abbreviated, segmentWidthPx);
-                                    if (abbreviatedFits) {
-                                        segmentDiv.textContent = abbreviated;
-                                    } else {
-                                        segmentDiv.classList.add('hide-text');
-                                        segmentDiv.textContent = displayName; // Full text for hover
-                                    }
-                                } else {
-                                    // For trash, just hide if "Trash" doesn't fit
-                                    if (segmentWidthPx < 30) { // Very small segments
-                                        segmentDiv.classList.add('hide-text');
-                                    }
-                                    segmentDiv.textContent = displayName;
-                                }
-                            }
-                        }, 0);
-                    });
-                }
-
-                row.appendChild(barContainer);
-                timelineContent.appendChild(row);
-            });
-
-            document.getElementById('timeline').classList.remove('hidden');
-        }
-
-        function showLoading(show) {
-            document.getElementById('loading').classList.toggle('hidden', !show);
-            document.querySelector('.analyze-btn').disabled = show;
-        }
-
-        function showError(message) {
-            const errorDiv = document.getElementById('error');
-            errorDiv.textContent = message;
-            errorDiv.classList.remove('hidden');
-        }
-
-        function hideError() {
-            document.getElementById('error').classList.add('hidden');
-        }
-
-        function showResults() {
-            document.getElementById('results').classList.remove('hidden');
-        }
-
-        function hideResults() {
-            document.getElementById('results').classList.add('hidden');
-            document.getElementById('timeline').classList.add('hidden');
-        }
-
-        // Allow Enter key to trigger analysis
-        document.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                analyzeReports();
-            }
+        validResults.forEach((result, index) => {
+          const title = result.title || `Run ${index + 1}`;
+          headerRow.innerHTML += `<th>${title}</th>`;
         });
+
+        // Add Best Segments column only if multiple runs
+        if (validResults.length > 1) {
+          headerRow.innerHTML +=
+            '<th style="color: #FFD700;">Best Segments</th>';
+        }
+
+        header.appendChild(headerRow);
+
+        // Calculate best segments and theoretical best time
+        const bestSegments = {};
+        let theoreticalBestTime = 0;
+        let showBestSegments = validResults.length > 1; // Only show if multiple runs
+
+        if (showBestSegments) {
+          // Find the best individual segment time for each boss across all runs
+          Array.from(allBosses).forEach((bossName) => {
+            if (bossName === "Total Run Time") return; // Skip total time
+
+            let bestSegmentTime = null;
+            let bestRunIndex = -1;
+
+            validResults.forEach((result, index) => {
+              const fight = result.fights?.find(
+                (f) => f.name === bossName && f.is_boss
+              );
+              if (
+                fight &&
+                fight.individual_segment_time !== undefined &&
+                fight.individual_segment_time !== null
+              ) {
+                if (
+                  bestSegmentTime === null ||
+                  fight.individual_segment_time < bestSegmentTime
+                ) {
+                  bestSegmentTime = fight.individual_segment_time;
+                  bestRunIndex = index;
+                }
+              }
+            });
+
+            if (bestSegmentTime !== null) {
+              bestSegments[bossName] = bestSegmentTime; // Best individual segment time
+              console.log(
+                `Best ${bossName} segment time: ${formatTimestamp(
+                  bestSegmentTime,
+                  true
+                )} from run ${bestRunIndex + 1}`
+              );
+            }
+          });
+
+          // Calculate theoretical best time by summing up all best segment times
+          let cumulativeTime = 0;
+          Array.from(allBosses).forEach((bossName) => {
+            if (bossName === "Total Run Time") return;
+            if (bestSegments[bossName] !== undefined) {
+              cumulativeTime += bestSegments[bossName];
+            }
+          });
+          theoreticalBestTime = cumulativeTime;
+          console.log(
+            `Theoretical best time: ${formatTimestamp(
+              theoreticalBestTime,
+              true
+            )}`
+          );
+        }
+
+        // Create rows for each boss (excluding "Total Run Time" which we'll add separately)
+        let cumulativeBestTime = 0; // <<< FIX: Initialize cumulative time for Best Segments column
+        Array.from(allBosses).forEach((bossName) => {
+          if (bossName === "Total Run Time") return; // Skip, we'll add this separately
+
+          const row = document.createElement("tr");
+          row.innerHTML = `<td class="boss-name">${bossName}</td>`;
+
+          const baseFight = validResults[0].fights?.find(
+            (f) => f.name === bossName && f.is_boss
+          );
+          const baseEndTime = baseFight ? baseFight.end_time_rel : null; // Use end_time_rel for boss kill time comparisons
+
+          validResults.forEach((result, index) => {
+            const fight = result.fights?.find(
+              (f) => f.name === bossName && f.is_boss
+            );
+            if (
+              fight &&
+              fight.end_time_rel !== undefined &&
+              fight.end_time_rel !== null
+            ) {
+              const timeStr = formatTimestamp(fight.end_time_rel, true); // Use end_time_rel for boss kill times
+
+              // Show boss kill time delta (main delta in parentheses on same line)
+              let bossDeltaStr = "";
+              if (index > 0 && baseEndTime !== null) {
+                const rawDelta = fight.end_time_rel - baseEndTime;
+                const bossDelta = Math.round(rawDelta / 1000) * 1000;
+                bossDeltaStr = formatDelta(bossDelta);
+                const bossDeltaClass = getDeltaClass(bossDelta);
+                bossDeltaStr = ` <span class="${bossDeltaClass}">(${bossDeltaStr})</span>`;
+              }
+
+              // Show boss fight duration delta (on line below)
+              let durationDeltaStr = "";
+              if (
+                index > 0 &&
+                fight.duration !== undefined &&
+                fight.duration !== null &&
+                baseFight &&
+                baseFight.duration !== undefined &&
+                baseFight.duration !== null
+              ) {
+                const rawDurationDelta = fight.duration - baseFight.duration;
+                const durationDelta =
+                  Math.round(rawDurationDelta / 1000) * 1000;
+                const durationDeltaFormatted = formatDelta(durationDelta);
+                const durationDeltaClass = getDeltaClass(durationDelta);
+                durationDeltaStr = `<br><span class="${durationDeltaClass}">${durationDeltaFormatted}</span>`;
+              }
+
+              row.innerHTML += `<td>${timeStr}${bossDeltaStr}${durationDeltaStr}</td>`;
+            } else {
+              row.innerHTML += "<td>-</td>";
+            }
+          });
+
+          // Add best segment time only if multiple runs
+          if (showBestSegments) {
+            if (bestSegments[bossName] !== undefined) {
+              // <<< FIX: Add the current boss's best segment to the cumulative total
+              cumulativeBestTime += bestSegments[bossName];
+
+              // <<< FIX: Display the new cumulative time
+              const bestTimeStr = formatTimestamp(cumulativeBestTime, true);
+
+              // <<< FIX: Calculate delta against the base run's cumulative time (end_time_rel)
+              const rawCumulativeDelta =
+                baseEndTime !== null ? cumulativeBestTime - baseEndTime : null;
+              const cumulativeDelta =
+                rawCumulativeDelta !== null
+                  ? Math.round(rawCumulativeDelta / 1000) * 1000
+                  : null;
+              const cumulativeDeltaStr = formatDelta(cumulativeDelta);
+              const cumulativeDeltaClass = getDeltaClass(cumulativeDelta);
+
+              row.innerHTML += `<td style="color: #FFD700;">${bestTimeStr} <span class="${cumulativeDeltaClass}">(${cumulativeDeltaStr})</span></td>`;
+            } else {
+              row.innerHTML += '<td style="color: #FFD700;">-</td>';
+            }
+          }
+
+          body.appendChild(row);
+        });
+
+        // Add total time row
+        const totalRow = document.createElement("tr");
+        totalRow.innerHTML =
+          '<td class="boss-name"><strong>Total Run Time</strong></td>';
+
+        const baseTotal = validResults[0].total_duration;
+        validResults.forEach((result, index) => {
+          if (
+            result.total_duration !== undefined &&
+            result.total_duration !== null
+          ) {
+            const timeStr = formatTimestamp(result.total_duration, true);
+            if (index === 0) {
+              totalRow.innerHTML += `<td><strong>${timeStr}</strong></td>`;
+            } else {
+              // Calculate raw delta first, then round to avoid precision issues
+              const rawDelta = result.total_duration - baseTotal;
+              const delta = Math.round(rawDelta / 1000) * 1000;
+              const deltaStr = formatDelta(delta);
+              const deltaClass = getDeltaClass(delta);
+              totalRow.innerHTML += `<td><strong>${timeStr}</strong><br><span class="${deltaClass}">${deltaStr}</span></td>`;
+            }
+          } else {
+            totalRow.innerHTML += "<td><strong>-</strong></td>";
+          }
+        });
+
+        // Add theoretical best time only if multiple runs
+        if (showBestSegments) {
+          const theoreticalBestStr = formatTimestamp(theoreticalBestTime, true);
+          // Calculate raw theoretical delta first, then round to avoid precision issues
+          const rawTheoreticalDelta = theoreticalBestTime - baseTotal;
+          const theoreticalDelta =
+            Math.round(rawTheoreticalDelta / 1000) * 1000;
+          const theoreticalDeltaStr = formatDelta(theoreticalDelta);
+          const theoreticalDeltaClass = getDeltaClass(theoreticalDelta);
+          totalRow.innerHTML += `<td style="color: #FFD700;"><strong>${theoreticalBestStr}</strong><br><span class="${theoreticalDeltaClass}">${theoreticalDeltaStr}</span></td>`;
+        }
+
+        body.appendChild(totalRow);
+
+        showResults();
+      }
+
+      function displayTimeline(data) {
+        const timelineContent = document.getElementById("timeline-content");
+        timelineContent.innerHTML = "";
+
+        if (!data.results || data.results.length === 0) return;
+
+        // Filter out results with errors
+        const validResults = data.results.filter(
+          (result) => result && !result.error
+        );
+        if (validResults.length === 0) return;
+
+        // Find the maximum time across all runs for scaling
+        let maxTime = 0;
+        validResults.forEach((result) => {
+          if (result.total_duration > maxTime) {
+            maxTime = result.total_duration;
+          }
+        });
+
+        // Create time scale
+        const scaleDiv = document.createElement("div");
+        scaleDiv.className = "timeline-scale";
+        const scalePoints = 10;
+        for (let i = 0; i <= scalePoints; i++) {
+          const time = (maxTime * i) / scalePoints;
+          const span = document.createElement("span");
+          span.textContent = formatTimestamp(time, true);
+          scaleDiv.appendChild(span);
+        }
+        timelineContent.appendChild(scaleDiv);
+
+        // Create timeline rows for each run
+        validResults.forEach((result, index) => {
+          const row = document.createElement("div");
+          row.className = "timeline-row";
+
+          const label = document.createElement("div");
+          label.className = "timeline-label";
+          label.textContent = result.title || `Run ${index + 1}`;
+          row.appendChild(label);
+
+          const barContainer = document.createElement("div");
+          barContainer.className = "timeline-bar-container";
+
+          if (result.timeline_data) {
+            result.timeline_data.forEach((segment) => {
+              const segmentDiv = document.createElement("div");
+              segmentDiv.className = `timeline-segment ${
+                segment.is_boss ? "segment-boss" : "segment-trash"
+              }`;
+
+              const leftPercent = (segment.start / maxTime) * 100;
+              const widthPercent =
+                ((segment.end - segment.start) / maxTime) * 100;
+
+              segmentDiv.style.left = `${leftPercent}%`;
+              segmentDiv.style.width = `${widthPercent}%`;
+
+              // Use "Trash" for non-boss segments, full name for bosses
+              const displayName = segment.is_boss ? segment.name : "Trash";
+
+              segmentDiv.title = `${segment.name}: ${formatTimestamp(
+                segment.start
+              )} - ${formatTimestamp(segment.end)}`;
+
+              barContainer.appendChild(segmentDiv);
+
+              // Smart text display logic - run after element is added to DOM
+              setTimeout(() => {
+                const segmentWidthPx = segmentDiv.offsetWidth;
+                const textFits = checkTextFits(displayName, segmentWidthPx);
+
+                if (textFits) {
+                  segmentDiv.textContent = displayName;
+                } else {
+                  // Try abbreviation for boss names
+                  if (segment.is_boss) {
+                    const abbreviated = abbreviateName(displayName);
+                    const abbreviatedFits = checkTextFits(
+                      abbreviated,
+                      segmentWidthPx
+                    );
+                    if (abbreviatedFits) {
+                      segmentDiv.textContent = abbreviated;
+                    } else {
+                      segmentDiv.classList.add("hide-text");
+                      segmentDiv.textContent = displayName; // Full text for hover
+                    }
+                  } else {
+                    // For trash, just hide if "Trash" doesn't fit
+                    if (segmentWidthPx < 30) {
+                      // Very small segments
+                      segmentDiv.classList.add("hide-text");
+                    }
+                    segmentDiv.textContent = displayName;
+                  }
+                }
+              }, 0);
+            });
+          }
+
+          row.appendChild(barContainer);
+          timelineContent.appendChild(row);
+        });
+
+        document.getElementById("timeline").classList.remove("hidden");
+      }
+
+      function showLoading(show) {
+        document.getElementById("loading").classList.toggle("hidden", !show);
+        document.querySelector(".analyze-btn").disabled = show;
+      }
+
+      function showError(message) {
+        const errorDiv = document.getElementById("error");
+        errorDiv.textContent = message;
+        errorDiv.classList.remove("hidden");
+      }
+
+      function hideError() {
+        document.getElementById("error").classList.add("hidden");
+      }
+
+      function showResults() {
+        document.getElementById("results").classList.remove("hidden");
+      }
+
+      function hideResults() {
+        document.getElementById("results").classList.add("hidden");
+        document.getElementById("timeline").classList.add("hidden");
+      }
+
+      // Allow Enter key to trigger analysis
+      document.addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+          analyzeReports();
+        }
+      });
     </script>
-</body>
+  </body>
 </html>

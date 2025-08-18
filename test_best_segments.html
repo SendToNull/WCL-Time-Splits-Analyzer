@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Best Segments Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #ffffff;
+        }
+        .results-container {
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 30px;
+        }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .results-table th {
+            background-color: #3d3d3d;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 2px solid #555;
+        }
+        .results-table th.boss-header {
+            text-align: left;
+            padding-left: 15px;
+        }
+        .results-table td {
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid #444;
+        }
+        .results-table tr:nth-child(even) {
+            background-color: #333;
+        }
+        .boss-name {
+            text-align: left !important;
+            font-weight: bold;
+            padding-left: 15px;
+            white-space: nowrap;
+        }
+        .delta-positive {
+            color: #4CAF50;
+        }
+        .delta-negative {
+            color: #f44336;
+        }
+        .delta-neutral {
+            color: #cccccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Best Segments Calculation Test</h1>
+        
+        <div class="results-container">
+            <table class="results-table">
+                <thead id="results-header">
+                    <!-- Dynamic header will be inserted here -->
+                </thead>
+                <tbody id="results-body">
+                    <!-- Dynamic results will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Mock data (same structure as would come from the API)
+        const mockData = {
+            "results": [
+                {
+                    "title": "aq40 pump",
+                    "zone": "Temple of Ahn'Qiraj",
+                    "date": "August 18, 2025",
+                    "total_duration": 1583000,
+                    "fights": [
+                        {
+                            "name": "The Prophet Skeram",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 55000,
+                            "end_time_rel": 55000,
+                            "duration": 55000,
+                            "individual_segment_time": 55000,
+                            "idle_time": null
+                        },
+                        {
+                            "name": "Silithid Royalty",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 205000,
+                            "end_time_rel": 205000,
+                            "duration": 150000,
+                            "individual_segment_time": 150000,
+                            "idle_time": 18000
+                        },
+                        {
+                            "name": "Battleguard Sartura",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 309000,
+                            "end_time_rel": 309000,
+                            "duration": 104000,
+                            "individual_segment_time": 104000,
+                            "idle_time": 12000
+                        },
+                        {
+                            "name": "Fankriss the Unyielding",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 432000,
+                            "end_time_rel": 432000,
+                            "duration": 123000,
+                            "individual_segment_time": 123000,
+                            "idle_time": 15000
+                        },
+                        {
+                            "name": "Viscidus",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 503000,
+                            "end_time_rel": 503000,
+                            "duration": 71000,
+                            "individual_segment_time": 71000,
+                            "idle_time": 8000
+                        },
+                        {
+                            "name": "Princess Huhuran",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 711000,
+                            "end_time_rel": 711000,
+                            "duration": 208000,
+                            "individual_segment_time": 208000,
+                            "idle_time": 25000
+                        },
+                        {
+                            "name": "Twin Emperors",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 901000,
+                            "end_time_rel": 901000,
+                            "duration": 190000,
+                            "individual_segment_time": 190000,
+                            "idle_time": 20000
+                        },
+                        {
+                            "name": "Ouro",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 1332000,
+                            "end_time_rel": 1332000,
+                            "duration": 431000,
+                            "individual_segment_time": 431000,
+                            "idle_time": 45000
+                        },
+                        {
+                            "name": "C'Thun",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 1460000,
+                            "end_time_rel": 1460000,
+                            "duration": 128000,
+                            "individual_segment_time": 128000,
+                            "idle_time": 15000
+                        }
+                    ],
+                    "timeline_data": []
+                },
+                {
+                    "title": "run 2",
+                    "zone": "Temple of Ahn'Qiraj",
+                    "date": "August 18, 2025",
+                    "total_duration": 1591000,
+                    "fights": [
+                        {
+                            "name": "The Prophet Skeram",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 39000,
+                            "end_time_rel": 39000,
+                            "duration": 39000,
+                            "individual_segment_time": 39000,
+                            "idle_time": null
+                        },
+                        {
+                            "name": "Silithid Royalty",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 186000,
+                            "end_time_rel": 186000,
+                            "duration": 147000,
+                            "individual_segment_time": 147000,
+                            "idle_time": 15000
+                        },
+                        {
+                            "name": "Battleguard Sartura",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 308000,
+                            "end_time_rel": 308000,
+                            "duration": 122000,
+                            "individual_segment_time": 122000,
+                            "idle_time": 18000
+                        },
+                        {
+                            "name": "Fankriss the Unyielding",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 413000,
+                            "end_time_rel": 413000,
+                            "duration": 105000,
+                            "individual_segment_time": 105000,
+                            "idle_time": 12000
+                        },
+                        {
+                            "name": "Viscidus",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 503000,
+                            "end_time_rel": 503000,
+                            "duration": 90000,
+                            "individual_segment_time": 90000,
+                            "idle_time": 10000
+                        },
+                        {
+                            "name": "Princess Huhuran",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 701000,
+                            "end_time_rel": 701000,
+                            "duration": 198000,
+                            "individual_segment_time": 198000,
+                            "idle_time": 22000
+                        },
+                        {
+                            "name": "Twin Emperors",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 884000,
+                            "end_time_rel": 884000,
+                            "duration": 183000,
+                            "individual_segment_time": 183000,
+                            "idle_time": 18000
+                        },
+                        {
+                            "name": "Ouro",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 1329000,
+                            "end_time_rel": 1329000,
+                            "duration": 445000,
+                            "individual_segment_time": 445000,
+                            "idle_time": 50000
+                        },
+                        {
+                            "name": "C'Thun",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 1460000,
+                            "end_time_rel": 1460000,
+                            "duration": 131000,
+                            "individual_segment_time": 131000,
+                            "idle_time": 12000
+                        }
+                    ],
+                    "timeline_data": []
+                },
+                {
+                    "title": "GT AQ 14/08",
+                    "zone": "Temple of Ahn'Qiraj",
+                    "date": "August 14, 2025",
+                    "total_duration": 1872000,
+                    "fights": [
+                        {
+                            "name": "The Prophet Skeram",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 57000,
+                            "end_time_rel": 57000,
+                            "duration": 57000,
+                            "individual_segment_time": 57000,
+                            "idle_time": null
+                        },
+                        {
+                            "name": "Silithid Royalty",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 243000,
+                            "end_time_rel": 243000,
+                            "duration": 186000,
+                            "individual_segment_time": 186000,
+                            "idle_time": 22000
+                        },
+                        {
+                            "name": "Battleguard Sartura",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 348000,
+                            "end_time_rel": 348000,
+                            "duration": 105000,
+                            "individual_segment_time": 105000,
+                            "idle_time": 15000
+                        },
+                        {
+                            "name": "Fankriss the Unyielding",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 475000,
+                            "end_time_rel": 475000,
+                            "duration": 127000,
+                            "individual_segment_time": 127000,
+                            "idle_time": 18000
+                        },
+                        {
+                            "name": "Viscidus",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 566000,
+                            "end_time_rel": 566000,
+                            "duration": 91000,
+                            "individual_segment_time": 91000,
+                            "idle_time": 12000
+                        },
+                        {
+                            "name": "Princess Huhuran",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 790000,
+                            "end_time_rel": 790000,
+                            "duration": 224000,
+                            "individual_segment_time": 224000,
+                            "idle_time": 28000
+                        },
+                        {
+                            "name": "Twin Emperors",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 1063000,
+                            "end_time_rel": 1063000,
+                            "duration": 273000,
+                            "individual_segment_time": 273000,
+                            "idle_time": 35000
+                        },
+                        {
+                            "name": "Ouro",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 1550000,
+                            "end_time_rel": 1550000,
+                            "duration": 487000,
+                            "individual_segment_time": 487000,
+                            "idle_time": 60000
+                        },
+                        {
+                            "name": "C'Thun",
+                            "is_boss": true,
+                            "is_kill": true,
+                            "start_time_rel": 1704000,
+                            "end_time_rel": 1704000,
+                            "duration": 154000,
+                            "individual_segment_time": 154000,
+                            "idle_time": 18000
+                        }
+                    ],
+                    "timeline_data": []
+                }
+            ]
+        };
+
+        function formatTimestamp(ms, includeHours = true) {
+            if (ms === null || ms === undefined) {
+                return "---";
+            }
+            
+            let delta = Math.abs(ms) / 1000;
+            const days = Math.floor(delta / 86400);
+            delta -= days * 86400;
+            const hours = Math.floor(delta / 3600) % 24;
+            delta -= hours * 3600;
+            const minutes = Math.floor(delta / 60) % 60;
+            delta -= minutes * 60;
+            const seconds = Math.floor(delta % 60);
+
+            let secondsString = '';
+            if (seconds < 10)
+                secondsString = '0' + seconds.toString();
+            else
+                secondsString = seconds.toString();
+
+            let minutesString = '';
+            if (minutes < 10)
+                minutesString = '0' + minutes.toString();
+            else
+                minutesString = minutes.toString();
+
+            if (includeHours)
+                return hours + ":" + minutesString + ":" + secondsString;
+            else
+                return minutesString + ":" + secondsString;
+        }
+
+        function formatDelta(delta) {
+            if (delta === null || delta === undefined) return '';
+            
+            const formatted = formatTimestamp(Math.abs(delta), false);
+            if (delta > 0) {
+                return `+${formatted}`;
+            } else if (delta < 0) {
+                return `-${formatted}`;
+            } else {
+                return formatted;
+            }
+        }
+
+        function getDeltaClass(delta) {
+            if (delta === null || delta === undefined) return 'delta-neutral';
+            if (delta > 0) return 'delta-negative';
+            if (delta < 0) return 'delta-positive';
+            return 'delta-neutral';
+        }
+
+        function displayResults(data) {
+            const header = document.getElementById('results-header');
+            const body = document.getElementById('results-body');
+            
+            // Clear existing content
+            header.innerHTML = '';
+            body.innerHTML = '';
+
+            const validResults = data.results.filter(result => result && !result.error);
+            if (validResults.length === 0) {
+                return;
+            }
+
+            // Get all unique boss names
+            const allBosses = new Set();
+            validResults.forEach(result => {
+                if (result.fights) {
+                    result.fights.forEach(fight => {
+                        if (fight.is_boss && !fight.name.includes('(Trash)')) {
+                            allBosses.add(fight.name);
+                        }
+                    });
+                }
+            });
+
+            // Add "Total Run Time" to the list
+            allBosses.add("Total Run Time");
+
+            // Create header
+            const headerRow = document.createElement('tr');
+            headerRow.innerHTML = '<th class="boss-header">Boss</th>';
+            
+            validResults.forEach((result, index) => {
+                const title = result.title || `Run ${index + 1}`;
+                headerRow.innerHTML += `<th>${title}</th>`;
+            });
+            
+            // Add Best Segments column only if multiple runs
+            if (validResults.length > 1) {
+                headerRow.innerHTML += '<th style="color: #FFD700;">Best Segments</th>';
+            }
+            
+            header.appendChild(headerRow);
+
+            // Calculate best segments and theoretical best time
+            const bestSegments = {};
+            const bestSegmentsCumulative = {};
+            let theoreticalBestTime = 0;
+            let showBestSegments = validResults.length > 1;
+
+            if (showBestSegments) {
+                // Find the best cumulative time achieved for each boss across all runs
+                Array.from(allBosses).forEach(bossName => {
+                    if (bossName === "Total Run Time") return; // Skip total time
+                    
+                    let bestCumulativeTime = null;
+                    let bestRunIndex = -1;
+                    
+                    validResults.forEach((result, index) => {
+                        const fight = result.fights?.find(f => f.name === bossName && f.is_boss);
+                        if (fight && fight.start_time_rel !== undefined && fight.start_time_rel !== null) {
+                            if (bestCumulativeTime === null || fight.start_time_rel < bestCumulativeTime) {
+                                bestCumulativeTime = fight.start_time_rel;
+                                bestRunIndex = index;
+                            }
+                        }
+                    });
+                    
+                    if (bestCumulativeTime !== null) {
+                        bestSegmentsCumulative[bossName] = bestCumulativeTime; // Best cumulative time achieved
+                        console.log(`Best ${bossName} cumulative time: ${formatTimestamp(bestCumulativeTime, true)} from run ${bestRunIndex + 1}`);
+                    }
+                });
+                
+                // Theoretical best time is the best final boss time achieved
+                const finalBoss = Array.from(allBosses).filter(name => name !== "Total Run Time").pop();
+                if (finalBoss && bestSegmentsCumulative[finalBoss]) {
+                    theoreticalBestTime = bestSegmentsCumulative[finalBoss];
+                }
+                console.log(`Best total time achieved: ${formatTimestamp(theoreticalBestTime, true)}`);
+            }
+
+            // Create rows for each boss (excluding "Total Run Time" which we'll add separately)
+            Array.from(allBosses).forEach(bossName => {
+                if (bossName === "Total Run Time") return; // Skip, we'll add this separately
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="boss-name">${bossName}</td>`;
+
+                const baseFight = validResults[0].fights?.find(f => f.name === bossName && f.is_boss);
+                const baseTime = baseFight ? baseFight.start_time_rel : null;
+
+                validResults.forEach((result, index) => {
+                    const fight = result.fights?.find(f => f.name === bossName && f.is_boss);
+                    if (fight && fight.start_time_rel !== undefined && fight.start_time_rel !== null) {
+                        const timeStr = formatTimestamp(fight.start_time_rel, true);
+                        if (index === 0) {
+                            row.innerHTML += `<td>${timeStr}</td>`;
+                        } else {
+                            // Cumulative time difference
+                            const cumulativeDelta = baseTime !== null ? fight.start_time_rel - baseTime : null;
+                            const cumulativeDeltaStr = formatDelta(cumulativeDelta);
+                            const cumulativeDeltaClass = getDeltaClass(cumulativeDelta);
+                            
+                            // Boss fight duration difference (only show for non-first bosses)
+                            const isFirstBoss = bossName === "The Prophet Skeram";
+                            let durationDeltaStr = '';
+                            
+                            if (!isFirstBoss) {
+                                const baseFightDuration = baseFight ? baseFight.duration : null;
+                                const fightDurationDelta = (baseFightDuration !== null && fight.duration !== null) ? 
+                                    fight.duration - baseFightDuration : null;
+                                durationDeltaStr = formatDelta(fightDurationDelta);
+                                const durationDeltaClass = getDeltaClass(fightDurationDelta);
+                                durationDeltaStr = `<br><span class="${durationDeltaClass}">${durationDeltaStr}</span>`;
+                            }
+                            
+                            row.innerHTML += `<td>${timeStr} <span class="${cumulativeDeltaClass}">(${cumulativeDeltaStr})</span>${durationDeltaStr}</td>`;
+                        }
+                    } else {
+                        row.innerHTML += '<td>-</td>';
+                    }
+                });
+
+                // Add best segment time only if multiple runs
+                if (showBestSegments) {
+                    if (bestSegmentsCumulative[bossName] !== undefined) {
+                        const bestTimeStr = formatTimestamp(bestSegmentsCumulative[bossName], true);
+                        // For cumulative times, compare against the base run's cumulative time
+                        const cumulativeDelta = baseTime !== null ? bestSegmentsCumulative[bossName] - baseTime : null;
+                        const cumulativeDeltaStr = formatDelta(cumulativeDelta);
+                        const cumulativeDeltaClass = getDeltaClass(cumulativeDelta);
+                        
+                        // Boss fight duration difference for best segments (only show for non-first bosses)
+                        const isFirstBoss = bossName === "The Prophet Skeram";
+                        let bestDurationDeltaStr = '';
+                        
+                        if (!isFirstBoss) {
+                            const baseFightDuration = baseFight ? baseFight.duration : null;
+                            // Find the fight duration for the run that achieved the best cumulative time
+                            let bestFightDuration = null;
+                            validResults.forEach(result => {
+                                const fight = result.fights?.find(f => f.name === bossName && f.is_boss);
+                                if (fight && fight.start_time_rel === bestSegmentsCumulative[bossName]) {
+                                    bestFightDuration = fight.duration;
+                                }
+                            });
+                            
+                            const durationDelta = (baseFightDuration !== null && bestFightDuration !== null) ? 
+                                bestFightDuration - baseFightDuration : null;
+                            const durationDeltaStr = formatDelta(durationDelta);
+                            const durationDeltaClass = getDeltaClass(durationDelta);
+                            bestDurationDeltaStr = `<br><span class="${durationDeltaClass}">${durationDeltaStr}</span>`;
+                        }
+                        
+                        row.innerHTML += `<td style="color: #FFD700;">${bestTimeStr} <span class="${cumulativeDeltaClass}">(${cumulativeDeltaStr})</span>${bestDurationDeltaStr}</td>`;
+                    } else {
+                        row.innerHTML += '<td style="color: #FFD700;">-</td>';
+                    }
+                }
+
+                body.appendChild(row);
+            });
+
+            // Add total time row
+            const totalRow = document.createElement('tr');
+            totalRow.innerHTML = '<td class="boss-name"><strong>Total Run Time</strong></td>';
+            
+            const baseTotal = validResults[0].total_duration;
+            validResults.forEach((result, index) => {
+                if (result.total_duration !== undefined && result.total_duration !== null) {
+                    const timeStr = formatTimestamp(result.total_duration, true);
+                    if (index === 0) {
+                        totalRow.innerHTML += `<td><strong>${timeStr}</strong></td>`;
+                    } else {
+                        const delta = result.total_duration - baseTotal;
+                        const deltaStr = formatDelta(delta);
+                        const deltaClass = getDeltaClass(delta);
+                        totalRow.innerHTML += `<td><strong>${timeStr}</strong><br><span class="${deltaClass}">${deltaStr}</span></td>`;
+                    }
+                } else {
+                    totalRow.innerHTML += '<td><strong>-</strong></td>';
+                }
+            });
+            
+            // Add theoretical best time only if multiple runs
+            if (showBestSegments) {
+                const theoreticalBestStr = formatTimestamp(theoreticalBestTime, true);
+                const theoreticalDelta = theoreticalBestTime - baseTotal;
+                const theoreticalDeltaStr = formatDelta(theoreticalDelta);
+                const theoreticalDeltaClass = getDeltaClass(theoreticalDelta);
+                totalRow.innerHTML += `<td style="color: #FFD700;"><strong>${theoreticalBestStr}</strong><br><span class="${theoreticalDeltaClass}">${theoreticalDeltaStr}</span></td>`;
+            }
+            
+            body.appendChild(totalRow);
+        }
+
+        // Display the results when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            displayResults(mockData);
+        });
+    </script>
+</body>
+</html>
