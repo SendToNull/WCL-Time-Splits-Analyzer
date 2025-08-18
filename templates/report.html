@@ -118,6 +118,21 @@
         <h2>{{ data1.title }}</h2>
         <p>{{ data1.zone }} - {{ data1.date }}</p>
         <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Idle</th>
+              <th>Start</th>
+              <th>Duration</th>
+              <th>End</th>
+              {% if data1.zone == "Naxxramas" %}
+              <th>Wing Time</th>
+              {% endif %}
+              {% if data2 %}
+              <th>Delta</th>
+              {% endif %}
+            </tr>
+          </thead>
           <tbody>
             {% set total_idle = namespace(value=0) %} {% for fight in
             data1.fights %} {% set total_idle.value = total_idle.value +
@@ -126,14 +141,16 @@
               class="{% if fight.is_boss %}boss{% else %}trash{% endif %}{% if fight.is_boss and not fight.is_kill %} wipe{% endif %}"
             >
               <td>{{ fight.name }}</td>
-              <td>{{ format_timestamp(fight.idle_time) }}</td>
-              <td>{{ format_timestamp(fight.start_time_rel) }}</td>
-              <td>{{ format_timestamp(fight.duration) }}</td>
-              <td>{{ format_timestamp(fight.end_time_rel) }}</td>
+              <td>{{ fight.idle_time|format_timestamp if fight.idle_time > 0 else "---" }}</td>
+              <td>{{ fight.start_time_rel|format_timestamp }}</td>
+              <td>{{ fight.duration|format_timestamp }}</td>
+              <td>{{ fight.end_time_rel|format_timestamp }}</td>
+              {% if data1.zone == "Naxxramas" %}
               <td>
-                {{ format_timestamp(fight.wing_time) if fight.wing_time else ''
+                {{ fight.wing_time|format_timestamp if fight.wing_time else ''
                 }}
               </td>
+              {% endif %}
               {% if data2 %}
               <td>
                 {% if fight.delta is defined %}
@@ -141,7 +158,7 @@
                   class="{% if fight.delta >= 0 %}delta-positive{% else %}delta-negative{% endif %}"
                 >
                   {% if fight.delta >= 0 %}+{% endif %}{{
-                  format_timestamp(fight.delta, include_hours=False) }}
+                  fight.delta|format_timestamp(include_hours=False) }}
                 </span>
                 {% elif fight.is_boss %} &mdash; {% endif %}
               </td>
@@ -150,10 +167,10 @@
             {% endfor %}
             <tr class="summary-row">
               <td colspan="2">
-                Total Idle Time: {{ format_timestamp(total_idle.value) }}
+                Total Idle Time: {{ total_idle.value|format_timestamp }}
               </td>
-              <td colspan="{{ 4 if data2 else 3 }}">
-                Total Run Time: {{ format_timestamp(data1.total_duration) }}
+              <td colspan="{{ (5 if data1.zone == 'Naxxramas' else 4) + (1 if data2 else 0) - 2 }}">
+                Total Run Time: {{ data1.total_duration|format_timestamp }}
               </td>
               {% if data2 %}
               <td></td>
@@ -163,7 +180,53 @@
         </table>
       </div>
       {% endif %} {% if data2 %}
-      <div class="report-card"></div>
+      <div class="report-card">
+        <h2>{{ data2.title }}</h2>
+        <p>{{ data2.zone }} - {{ data2.date }}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Idle</th>
+              <th>Start</th>
+              <th>Duration</th>
+              <th>End</th>
+              {% if data2.zone == "Naxxramas" %}
+              <th>Wing Time</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% set total_idle2 = namespace(value=0) %} {% for fight in
+            data2.fights %} {% set total_idle2.value = total_idle2.value +
+            fight.idle_time %}
+            <tr
+              class="{% if fight.is_boss %}boss{% else %}trash{% endif %}{% if fight.is_boss and not fight.is_kill %} wipe{% endif %}"
+            >
+              <td>{{ fight.name }}</td>
+              <td>{{ fight.idle_time|format_timestamp if fight.idle_time > 0 else "---" }}</td>
+              <td>{{ fight.start_time_rel|format_timestamp }}</td>
+              <td>{{ fight.duration|format_timestamp }}</td>
+              <td>{{ fight.end_time_rel|format_timestamp }}</td>
+              {% if data2.zone == "Naxxramas" %}
+              <td>
+                {{ fight.wing_time|format_timestamp if fight.wing_time else ''
+                }}
+              </td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+            <tr class="summary-row">
+              <td colspan="2">
+                Total Idle Time: {{ total_idle2.value|format_timestamp }}
+              </td>
+              <td colspan="{{ (5 if data2.zone == 'Naxxramas' else 4) - 2 }}">
+                Total Run Time: {{ data2.total_duration|format_timestamp }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       {% endif %}
     </div>
   </body>

@@ -1,159 +1,224 @@
 # WCL Time Splits Analyzer
 
-A web-based tool for analyzing and comparing raid performance from [Warcraft Logs](https://warcraftlogs.com/). This application fetches combat log data from both Classic and Fresh WarcraftLogs, calculates detailed time splits for each fight, measures idle time between encounters, and provides special metrics for raids like Naxxramas. It's designed to help raid teams identify areas for improvement and track their progress over time.
+A Flask web application for analyzing and comparing Warcraft Logs (WCL) combat reports. Provides detailed timing analysis with multiple run comparisons and timeline visualization.
 
-## ✨ Features
+## Features
 
-### **Core Analysis**
-* **Detailed Fight Analysis**: View start times, end times, and durations for all boss and trash fights relative to the start of the raid
-* **Accurate Timing**: Properly excludes "Unknown" fights from timing calculations for precise raid duration measurements
-* **Idle Time Calculation**: Automatically calculates the downtime between each fight to identify pacing issues
+- **Multi-Run Comparison**: Compare timing data across multiple WarcraftLogs reports
+- **Best Segments Analysis**: Calculate theoretical best run times using individual boss segments
+- **Timeline Visualization**: Interactive timeline showing fight progression
+- **Zone Support**: Supports multiple WoW Classic raid zones including Naxxramas, AQ40, BWL, and more
+- **Wing Analysis**: Special Naxxramas wing timing calculations
+- **Delta Calculations**: Compare performance differences between runs
 
-### **Comparison & Visualization**
-* **Dual Report Comparison**: Load two reports side-by-side to compare boss kill timings and see improvements at a glance
-* **Enhanced Delta Display**: Time differences are clearly marked as faster (▼ green) or slower (▲ red) with bold highlighting
-* **Naxxramas Wing Splits**: For Naxxramas logs, automatically calculates and displays clear time for each wing (Spider, Plague, Abomination, Military)
+## Project Structure
 
-### **User Experience**
-* **Flexible Input**: Accept both report IDs and full WarcraftLogs URLs - just paste either format
-* **Multi-Platform Support**: Automatically detects and fetches from both classic.warcraftlogs.com and fresh.warcraftlogs.com
-* **Trash Fight Toggle**: Easily show or hide trash fights to focus on the data that matters most
-* **Responsive Design**: Clean, dark-mode UI that works on desktop and mobile devices
-* **Better Error Handling**: Clear, specific error messages help troubleshoot issues
+```
+├── src/                    # Source code
+│   ├── app.py             # Main Flask application
+│   └── config.py          # Configuration management
+├── templates/             # HTML templates
+├── tests/                 # Test files
+├── scripts/               # Deployment and utility scripts
+├── debug/                 # Debug files (excluded from git)
+├── docs/                  # Documentation
+├── wsgi.py               # WSGI entry point for deployment
+├── requirements.txt       # Python dependencies
+├── Dockerfile            # Docker configuration
+└── .env.example          # Environment variables template
+```
 
-## 🛠️ Tech Stack
-
-* **Backend**: Python with Flask
-* **API Client**: Requests
-* **Frontend**: HTML5, CSS3, vanilla JavaScript (with Fetch API)
-* **WSGI Server**: Gunicorn
-* **Containerization**: Docker
-
-## 🚀 Getting Started
+## Installation
 
 ### Prerequisites
 
-* Python 3.8+
-* Docker (optional, for containerized deployment)
-* A Warcraft Logs (WCL) v1 API Key
+- Python 3.8+
+- WarcraftLogs API key (get from https://www.warcraftlogs.com/profile)
 
-### Installation & Setup
+### Setup
 
-1.  **Clone the Repository**
-    ```bash
-    git clone [https://github.com/your-username/wcl-analyzer.git](https://github.com/your-username/wcl-analyzer.git)
-    cd wcl-analyzer
-    ```
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/SendToNull/WCL-Time-Splits-Analyzer.git
+   cd WCL-Time-Splits-Analyzer
+   ```
 
-2.  **Set Up Environment Variables**
-    You need a WCL v1 Public API key. You can get one from your [WCL profile settings](https://www.warcraftlogs.com/profile).
+2. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-    Copy the example environment file and add your API key:
-    ```bash
-    cp .env.example .env
-    ```
-    
-    Then edit `.env` and replace `your_api_key_here` with your actual API key:
-    ```
-    WCL_API_KEY="your_actual_api_key_here"
-    ```
-    The application will load this variable automatically.
+3. **Configure environment variables**:
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your WCL_API_KEY
+   ```
 
-### Running the Application
+4. **Run the application**:
+   ```bash
+   python wsgi.py
+   ```
 
-You can run the application locally using Python or with Docker.
+The application will be available at `http://localhost:8080`
 
-#### Method 1: Running Locally
+## Configuration
 
-1.  **Create and activate a virtual environment:**
-    ```bash
-    # For Windows
-    python -m venv venv
-    .\venv\Scripts\activate
-    
-    # For macOS/Linux
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
+### Environment Variables
 
-2.  **Install the required packages:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+- `WCL_API_KEY`: Your WarcraftLogs API key (required)
+- `SECRET_KEY`: Flask secret key (required for production)
+- `FLASK_ENV`: Environment mode (`development`, `production`, `testing`)
+- `PORT`: Server port (default: 8080)
+- `HOST`: Server host (default: 0.0.0.0)
+- `REQUEST_TIMEOUT`: API request timeout in seconds (default: 30)
 
-3.  **Run the Flask application:**
-    ```bash
-    flask run
-    # Or 'python app.py' (on port `8080`)
-    ```
-    The application will be available at `http://127.0.0.1:5000`.
+### Production Configuration
 
-#### Method 2: Running with Docker
+For production deployment, ensure these environment variables are set:
 
-1.  **Build the Docker image:**
-    ```bash
-    docker build -t wcl-analyzer .
-    ```
+```bash
+export FLASK_ENV=production
+export SECRET_KEY=your-secure-secret-key
+export WCL_API_KEY=your-wcl-api-key
+```
 
-2.  **Run the Docker container:**
-    Make sure your `.env` file is created as described above.
-    ```bash
-    docker run --rm -p 8080:8080 --env-file .env wcl-analyzer
-    ```
-    The application will be available at `http://localhost:8080`.
+## Deployment
 
-## 📖 Usage
+### Docker Deployment
 
-### **Basic Analysis**
-1. Navigate to the application URL in your web browser
-2. Enter a report ID or paste a full WarcraftLogs URL in the "Report ID 1" field
-   - **Report ID**: `xkTQz4GyjJ6XFbhw`
-   - **Full URL**: `https://classic.warcraftlogs.com/reports/xkTQz4GyjJ6XFbhw`
-   - **Fresh URL**: `https://fresh.warcraftlogs.com/reports/WqaDLpJjXzM9ymfK`
-3. Click "Analyze" to process the report
+Build and run with Docker:
 
-### **Comparison Analysis**
-1. Enter your primary report in "Report ID 1"
-2. Enter a comparison report in "Report ID 2" (optional)
-3. Click "Analyze" to see side-by-side comparison with delta times
+```bash
+docker build -t wcl-analyzer .
+docker run -p 8080:8080 -e WCL_API_KEY=your-api-key -e SECRET_KEY=your-secret-key wcl-analyzer
+```
 
-### **Understanding the Results**
-- **Green ▼ arrows**: Faster times compared to the second report
-- **Red ▲ arrows**: Slower times compared to the second report
-- **Idle Time**: Time spent between fights (useful for identifying pacing issues)
-- **Wing Time**: For Naxxramas, shows time to clear each wing
-- **Total Run Time**: Complete raid duration (excluding "Unknown" fights)
+### Google Cloud Run Deployment
 
-## 🔧 Supported Raids
+Deploy to Google Cloud Run using the following command:
 
-The application automatically detects and supports:
-- **Classic WoW**: Molten Core, Blackwing Lair, Temple of Ahn'Qiraj, Naxxramas
-- **Season of Discovery**: Blackfathom Deeps, Gnomeregan, Blackwing Lair, Temple of Ahn'Qiraj, Naxxramas
-- **Fresh Servers**: All supported Classic raids
+```bash
+gcloud run deploy wcl-analyzer \
+  --source . \
+  --region us-central1 \
+  --set-env-vars "WCL_API_KEY=your-wcl-api-key,SECRET_KEY=your-secret-key" \
+  --allow-unauthenticated
+```
 
-## 🐛 Troubleshooting
+**Prerequisites for Cloud Run deployment:**
+- Google Cloud SDK installed and configured
+- Docker installed (for building the container)
+- Valid WarcraftLogs API key
+- Google Cloud project with Cloud Run API enabled
 
-### Common Issues
-- **"Report not found"**: Verify the report ID is correct and the report is public
-- **"Invalid API key"**: Check your WCL_API_KEY environment variable
-- **"No fights found"**: The report may not contain supported raid content
-- **Timeout errors**: Large reports may take longer to process
+**Important Notes:**
+- The application uses `wsgi.py` as the WSGI entry point to avoid circular import issues
+- Both `WCL_API_KEY` and `SECRET_KEY` environment variables are required for production deployment
+- The Dockerfile is configured to run with gunicorn for production-ready performance
 
-### Getting Help
-If you encounter issues:
-1. Check that your API key is valid and has proper permissions
-2. Verify the report is public and contains raid data
-3. Try with a different report to isolate the issue
+### Environment Variables for Production
 
-## 🤝 Contributing
+When deploying to production environments, ensure these variables are set:
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+```bash
+# Required
+WCL_API_KEY=your-warcraftlogs-api-key
+SECRET_KEY=your-secure-random-secret-key
 
-## 📄 License
+# Optional
+FLASK_ENV=production
+PORT=8080
+HOST=0.0.0.0
+REQUEST_TIMEOUT=30
+```
+
+## API Endpoints
+
+### `POST /api/analyze`
+
+Analyze WarcraftLogs reports.
+
+**Request Body**:
+```json
+{
+  "reports": ["report_id_1", "report_id_2"]
+}
+```
+
+**Response**:
+```json
+{
+  "results": [
+    {
+      "title": "Raid Title",
+      "zone": "Naxxramas",
+      "date": "January 15, 2024",
+      "total_duration": 3600000,
+      "fights": [...],
+      "timeline_data": [...]
+    }
+  ]
+}
+```
+
+### `GET /health`
+
+Health check endpoint for monitoring.
+
+**Response**:
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-15T12:00:00.000Z"
+}
+```
+
+## Development
+
+### Running Tests
+
+```bash
+# Run all tests
+python -m pytest tests/
+
+# Run specific test
+python tests/test_timing.py
+```
+
+### Project Structure Guidelines
+
+- **src/**: Main application code
+- **tests/**: All test files
+- **templates/**: Jinja2 HTML templates
+- **scripts/**: Deployment and utility scripts
+- **debug/**: Debug files (git-ignored)
+
+### Code Style
+
+- Follow PEP 8 guidelines
+- Use type hints where appropriate
+- Document functions with docstrings
+- Keep configuration in `src/config.py`
+
+## Supported Zones
+
+- **Classic**: Molten Core, Blackwing Lair, Temple of Ahn'Qiraj, Naxxramas
+- **Season of Discovery**: Blackfathom Deeps, Gnomeregan, BWL, AQ40, Naxx
+- **Era**: Temple of Ahn'Qiraj, Naxxramas
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-- [Warcraft Logs](https://warcraftlogs.com/) for providing the combat log data API
-- The Classic WoW community for feedback and testing
+- WarcraftLogs for providing the API
+- Original Google Apps Script implementation for timing logic reference

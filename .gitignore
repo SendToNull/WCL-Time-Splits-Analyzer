@@ -119,6 +119,12 @@ dmypy.json
 ehthumbs.db
 Thumbs.db
 
-# Debug files
-debug_api.py
+# Debug files and directories
+debug/
+debug_*.py
+debug_*.html
 *.debug
+
+# Test files (keep in repo but ignore test outputs)
+test_output/
+*.test.log
