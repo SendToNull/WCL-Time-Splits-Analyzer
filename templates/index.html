@@ -1,2220 +1,1953 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WCL Time Splits Analyzer</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        border: "hsl(var(--border))",
-                        input: "hsl(var(--input))",
-                        ring: "hsl(var(--ring))",
-                        background: "hsl(var(--background))",
-                        foreground: "hsl(var(--foreground))",
-                        primary: {
-                            DEFAULT: "hsl(var(--primary))",
-                            foreground: "hsl(var(--primary-foreground))",
-                        },
-                        secondary: {
-                            DEFAULT: "hsl(var(--secondary))",
-                            foreground: "hsl(var(--secondary-foreground))",
-                        },
-                        destructive: {
-                            DEFAULT: "hsl(var(--destructive))",
-                            foreground: "hsl(var(--destructive-foreground))",
-                        },
-                        muted: {
-                            DEFAULT: "hsl(var(--muted))",
-                            foreground: "hsl(var(--muted-foreground))",
-                        },
-                        accent: {
-                            DEFAULT: "hsl(var(--accent))",
-                            foreground: "hsl(var(--accent-foreground))",
-                        },
-                        popover: {
-                            DEFAULT: "hsl(var(--popover))",
-                            foreground: "hsl(var(--popover-foreground))",
-                        },
-                        card: {
-                            DEFAULT: "hsl(var(--card))",
-                            foreground: "hsl(var(--card-foreground))",
-                        },
-                    },
-                    borderRadius: {
-                        lg: "var(--radius)",
-                        md: "calc(var(--radius) - 2px)",
-                        sm: "calc(var(--radius) - 4px)",
-                    },
-                    keyframes: {
-                        "accordion-down": {
-                            from: { height: 0 },
-                            to: { height: "var(--radix-accordion-content-height)" },
-                        },
-                        "accordion-up": {
-                            from: { height: "var(--radix-accordion-content-height)" },
-                            to: { height: 0 },
-                        },
-                        shimmer: {
-                            "0%": { transform: "translateX(-100%)" },
-                            "100%": { transform: "translateX(100%)" },
-                        },
-                    },
-                    animation: {
-                        "accordion-down": "accordion-down 0.2s ease-out",
-                        "accordion-up": "accordion-up 0.2s ease-out",
-                        shimmer: "shimmer 2s infinite",
-                    },
-                },
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "system-ui", "sans-serif"],
             },
-        }
+            colors: {
+              border: "hsl(var(--border))",
+              input: "hsl(var(--input))",
+              ring: "hsl(var(--ring))",
+              background: "hsl(var(--background))",
+              foreground: "hsl(var(--foreground))",
+              primary: {
+                DEFAULT: "hsl(var(--primary))",
+                foreground: "hsl(var(--primary-foreground))",
+              },
+              secondary: {
+                DEFAULT: "hsl(var(--secondary))",
+                foreground: "hsl(var(--secondary-foreground))",
+              },
+              destructive: {
+                DEFAULT: "hsl(var(--destructive))",
+                foreground: "hsl(var(--destructive-foreground))",
+              },
+              muted: {
+                DEFAULT: "hsl(var(--muted))",
+                foreground: "hsl(var(--muted-foreground))",
+              },
+              accent: {
+                DEFAULT: "hsl(var(--accent))",
+                foreground: "hsl(var(--accent-foreground))",
+              },
+              popover: {
+                DEFAULT: "hsl(var(--popover))",
+                foreground: "hsl(var(--popover-foreground))",
+              },
+              card: {
+                DEFAULT: "hsl(var(--card))",
+                foreground: "hsl(var(--card-foreground))",
+              },
+            },
+            borderRadius: {
+              lg: "var(--radius)",
+              md: "calc(var(--radius) - 2px)",
+              sm: "calc(var(--radius) - 4px)",
+            },
+            keyframes: {
+              "accordion-down": {
+                from: { height: 0 },
+                to: { height: "var(--radix-accordion-content-height)" },
+              },
+              "accordion-up": {
+                from: { height: "var(--radix-accordion-content-height)" },
+                to: { height: 0 },
+              },
+              shimmer: {
+                "0%": { transform: "translateX(-100%)" },
+                "100%": { transform: "translateX(100%)" },
+              },
+            },
+            animation: {
+              "accordion-down": "accordion-down 0.2s ease-out",
+              "accordion-up": "accordion-up 0.2s ease-out",
+              shimmer: "shimmer 2s infinite",
+            },
+          },
+        },
+      };
     </script>
     <style>
-        :root {
-            --background: 222.2 84% 4.9%;
-            --foreground: 210 40% 98%;
-            --card: 222.2 84% 4.9%;
-            --card-foreground: 210 40% 98%;
-            --popover: 222.2 84% 4.9%;
-            --popover-foreground: 210 40% 98%;
-            --primary: 210 40% 98%;
-            --primary-foreground: 222.2 84% 4.9%;
-            --secondary: 217.2 32.6% 17.5%;
-            --secondary-foreground: 210 40% 98%;
-            --muted: 217.2 32.6% 17.5%;
-            --muted-foreground: 215 20.2% 65.1%;
-            --accent: 217.2 32.6% 17.5%;
-            --accent-foreground: 210 40% 98%;
-            --destructive: 0 62.8% 30.6%;
-            --destructive-foreground: 210 40% 98%;
-            --border: 217.2 32.6% 17.5%;
-            --input: 217.2 32.6% 17.5%;
-            --ring: 212.7 26.8% 83.9%;
-            --radius: 0.5rem;
-        }
+      :root {
+        --background: 222.2 84% 4.9%;
+        --foreground: 210 40% 98%;
+        --card: 222.2 84% 4.9%;
+        --card-foreground: 210 40% 98%;
+        --popover: 222.2 84% 4.9%;
+        --popover-foreground: 210 40% 98%;
+        --primary: 210 40% 98%;
+        --primary-foreground: 222.2 84% 4.9%;
+        --secondary: 217.2 32.6% 17.5%;
+        --secondary-foreground: 210 40% 98%;
+        --muted: 217.2 32.6% 17.5%;
+        --muted-foreground: 215 20.2% 65.1%;
+        --accent: 217.2 32.6% 17.5%;
+        --accent-foreground: 210 40% 98%;
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 210 40% 98%;
+        --border: 217.2 32.6% 17.5%;
+        --input: 217.2 32.6% 17.5%;
+        --ring: 212.7 26.8% 83.9%;
+        --radius: 0.5rem;
+      }
 
-        .light {
-            --background: 0 0% 100%;
-            --foreground: 222.2 84% 4.9%;
-            --card: 0 0% 100%;
-            --card-foreground: 222.2 84% 4.9%;
-            --popover: 0 0% 100%;
-            --popover-foreground: 222.2 84% 4.9%;
-            --primary: 222.2 47.4% 11.2%;
-            --primary-foreground: 210 40% 98%;
-            --secondary: 210 40% 96%;
-            --secondary-foreground: 222.2 47.4% 11.2%;
-            --muted: 210 40% 96%;
-            --muted-foreground: 215.4 16.3% 46.9%;
-            --accent: 210 40% 96%;
-            --accent-foreground: 222.2 47.4% 11.2%;
-            --destructive: 0 84.2% 60.2%;
-            --destructive-foreground: 210 40% 98%;
-            --border: 214.3 31.8% 91.4%;
-            --input: 214.3 31.8% 91.4%;
-            --ring: 222.2 84% 4.9%;
-        }
+      .light {
+        --background: 0 0% 100%;
+        --foreground: 222.2 84% 4.9%;
+        --card: 0 0% 100%;
+        --card-foreground: 222.2 84% 4.9%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 222.2 84% 4.9%;
+        --primary: 222.2 47.4% 11.2%;
+        --primary-foreground: 210 40% 98%;
+        --secondary: 210 40% 96%;
+        --secondary-foreground: 222.2 47.4% 11.2%;
+        --muted: 210 40% 96%;
+        --muted-foreground: 215.4 16.3% 46.9%;
+        --accent: 210 40% 96%;
+        --accent-foreground: 222.2 47.4% 11.2%;
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 210 40% 98%;
+        --border: 214.3 31.8% 91.4%;
+        --input: 214.3 31.8% 91.4%;
+        --ring: 222.2 84% 4.9%;
+      }
 
-        * {
-            border-color: hsl(var(--border));
-        }
+      * {
+        border-color: hsl(var(--border));
+      }
 
-        body {
-            background-color: hsl(var(--background));
-            color: hsl(var(--foreground));
-            font-feature-settings: "rlig" 1, "calt" 1;
-            font-variant-numeric: tabular-nums;
-        }
+      body {
+        background-color: hsl(var(--background));
+        color: hsl(var(--foreground));
+        font-feature-settings: "rlig" 1, "calt" 1;
+        font-variant-numeric: tabular-nums;
+      }
 
-        .shimmer {
-            position: relative;
-            overflow: hidden;
-        }
+      .shimmer {
+        position: relative;
+        overflow: hidden;
+      }
 
-        .shimmer::after {
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            transform: translateX(-100%);
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255, 255, 255, 0.1),
-                transparent
-            );
-            animation: shimmer 2s infinite;
-            content: '';
-        }
+      .shimmer::after {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        transform: translateX(-100%);
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.1),
+          transparent
+        );
+        animation: shimmer 2s infinite;
+        content: "";
+      }
 
-        .run-card {
-            transition: all 0.2s ease-in-out;
-        }
+      .run-card {
+        transition: all 0.2s ease-in-out;
+      }
 
-        .run-card:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
+      .run-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
 
-        .delta-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.125rem 0.375rem;
-            border-radius: 0.375rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-            font-variant-numeric: tabular-nums;
-        }
+      .delta-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.125rem 0.375rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+      }
 
-        .delta-faster {
-            background-color: rgba(34, 197, 94, 0.1);
-            color: rgb(34, 197, 94);
-            border: 1px solid rgba(34, 197, 94, 0.2);
-        }
+      .delta-faster {
+        background-color: rgba(34, 197, 94, 0.1);
+        color: rgb(34, 197, 94);
+        border: 1px solid rgba(34, 197, 94, 0.2);
+      }
 
-        .delta-slower {
-            background-color: rgba(239, 68, 68, 0.1);
-            color: rgb(239, 68, 68);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
+      .delta-slower {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: rgb(239, 68, 68);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+      }
 
-        .delta-neutral {
-            background-color: rgba(156, 163, 175, 0.1);
-            color: rgb(156, 163, 175);
-            border: 1px solid rgba(156, 163, 175, 0.2);
-        }
+      .delta-neutral {
+        background-color: rgba(156, 163, 175, 0.1);
+        color: rgb(156, 163, 175);
+        border: 1px solid rgba(156, 163, 175, 0.2);
+      }
 
-        .best-segment {
-            background-color: rgba(251, 191, 36, 0.1);
-            color: rgb(251, 191, 36);
-            border: 1px solid rgba(251, 191, 36, 0.2);
-        }
+      .table-container {
+        position: relative;
+        overflow: auto;
+        max-height: 70vh;
+      }
 
+      .table-container::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      .table-container::-webkit-scrollbar-track {
+        background: hsl(var(--muted));
+        border-radius: 4px;
+      }
+
+      .table-container::-webkit-scrollbar-thumb {
+        background: hsl(var(--muted-foreground));
+        border-radius: 4px;
+      }
+
+      .table-container::-webkit-scrollbar-thumb:hover {
+        background: hsl(var(--foreground));
+      }
+
+      .sticky-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: hsl(var(--card));
+        backdrop-filter: blur(8px);
+      }
+
+      .timeline-segment {
+        transition: all 0.2s ease-in-out;
+        cursor: pointer;
+      }
+
+      .timeline-segment:hover {
+        transform: scaleY(1.1);
+        z-index: 10;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .focus-visible:focus-visible {
+        outline: 2px solid hsl(var(--ring));
+        outline-offset: 2px;
+      }
+
+      @media (max-width: 768px) {
         .table-container {
-            position: relative;
-            overflow: auto;
-            max-height: 70vh;
+          max-height: 60vh;
         }
+      }
 
-        .table-container::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
 
-        .table-container::-webkit-scrollbar-track {
-            background: hsl(var(--muted));
-            border-radius: 4px;
-        }
+      /* Timeline expansion styles */
+      .timeline-expanded {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 95vw !important;
+        height: 90vh !important;
+        z-index: 50 !important;
+        background: hsl(var(--background)) !important;
+        padding: 2rem !important;
+        overflow-y: auto !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        border-radius: 0.75rem !important;
+        border: 2px solid hsl(var(--border)) !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+        filter: none !important;
+      }
 
-        .table-container::-webkit-scrollbar-thumb {
-            background: hsl(var(--muted-foreground));
-            border-radius: 4px;
-        }
+      .timeline-expanded .timeline-content {
+        max-width: none !important;
+        width: 100% !important;
+        height: 100% !important;
+      }
 
-        .table-container::-webkit-scrollbar-thumb:hover {
-            background: hsl(var(--foreground));
-        }
+      .timeline-expanded * {
+        filter: none !important;
+      }
 
-        .sticky-header {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background: hsl(var(--card));
-            backdrop-filter: blur(8px);
-        }
+      .page-blurred {
+        filter: blur(4px) !important;
+        opacity: 0.3 !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        pointer-events: none !important;
+      }
 
-        .timeline-segment {
-            transition: all 0.2s ease-in-out;
-            cursor: pointer;
-        }
+      .timeline-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 49;
+        opacity: 0;
+        transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+      }
 
-        .timeline-segment:hover {
-            transform: scaleY(1.1);
-            z-index: 10;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .focus-visible:focus-visible {
-            outline: 2px solid hsl(var(--ring));
-            outline-offset: 2px;
-        }
-
-        @media (max-width: 768px) {
-            .table-container {
-                max-height: 60vh;
-            }
-        }
-
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-
-        /* Timeline expansion styles */
-        .timeline-expanded {
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            width: 95vw !important;
-            height: 90vh !important;
-            z-index: 50 !important;
-            background: hsl(var(--background)) !important;
-            padding: 2rem !important;
-            overflow-y: auto !important;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            border-radius: 0.75rem !important;
-            border: 2px solid hsl(var(--border)) !important;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
-            filter: none !important; /* Ensure timeline itself is never blurred */
-        }
-
-        .timeline-expanded .timeline-content {
-            max-width: none !important;
-            width: 100% !important;
-            height: 100% !important;
-        }
-
-        .timeline-expanded * {
-            filter: none !important; /* Ensure all timeline children are never blurred */
-        }
-
-        .page-blurred {
-            filter: blur(4px) !important;
-            opacity: 0.3 !important;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            pointer-events: none !important;
-        }
-
-        .timeline-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 49;
-            opacity: 0;
-            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-        }
-
-        .timeline-overlay.active {
-            opacity: 1;
-        }
+      .timeline-overlay.active {
+        opacity: 1;
+      }
     </style>
-</head>
-<body class="min-h-screen bg-background font-sans antialiased">
-    <!-- Header -->
-    <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div class="container mx-auto flex h-16 items-center justify-between px-4">
-            <div class="flex items-center space-x-4">
-                <h1 class="text-xl font-semibold">WCL Time Splits Analyzer</h1>
-                <p class="text-sm text-muted-foreground hidden sm:block">Compare raid performance across multiple runs</p>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button
-                    id="theme-toggle"
-                    class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
-                    aria-label="Toggle theme"
-                >
-                    <i data-lucide="sun" class="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"></i>
-                    <i data-lucide="moon" class="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"></i>
-                </button>
-                <button
-                    id="help-button"
-                    class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
-                    aria-label="Show keyboard shortcuts"
-                >
-                    <i data-lucide="help-circle" class="h-4 w-4"></i>
-                </button>
-            </div>
+  </head>
+  <body class="min-h-screen bg-background font-sans antialiased">
+    <header
+      class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+    >
+      <div
+        class="container mx-auto flex h-16 items-center justify-between px-4"
+      >
+        <div class="flex items-center space-x-4">
+          <h1 class="text-xl font-semibold">WCL Time Splits Analyzer</h1>
+          <p class="text-sm text-muted-foreground hidden sm:block">
+            Compare raid performance across multiple runs
+          </p>
         </div>
+        <div class="flex items-center space-x-2">
+          <button
+            id="theme-toggle"
+            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+            aria-label="Toggle theme"
+          >
+            <i
+              data-lucide="sun"
+              class="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+            ></i>
+            <i
+              data-lucide="moon"
+              class="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+            ></i>
+          </button>
+          <button
+            id="help-button"
+            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+            aria-label="Show keyboard shortcuts"
+          >
+            <i data-lucide="help-circle" class="h-4 w-4"></i>
+          </button>
+        </div>
+      </div>
     </header>
 
     <main class="container mx-auto px-4 py-8 space-y-8">
-        <!-- Compare Panel -->
-        <section class="space-y-6" aria-labelledby="compare-heading">
+      <section class="space-y-6" aria-labelledby="compare-heading">
+        <div class="flex items-center justify-between">
+          <h2
+            id="compare-heading"
+            class="text-2xl font-semibold tracking-tight"
+          >
+            Compare Runs
+          </h2>
+          <div class="flex items-center space-x-2">
+            <button
+              id="analyze-btn"
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+              disabled
+            >
+              <i data-lucide="play" class="mr-2 h-4 w-4"></i>
+              Analyze
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="space-y-2">
+            <label
+              for="base-run-input"
+              class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Base Run <span class="text-destructive">*</span>
+            </label>
+            <div class="relative">
+              <input
+                id="base-run-input"
+                type="text"
+                placeholder="Paste WCL report or fight URL…"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-describedby="base-run-help"
+              />
+              <div
+                id="base-run-status"
+                class="absolute right-3 top-1/2 -translate-y-1/2"
+                aria-live="polite"
+              ></div>
+            </div>
+            <p id="base-run-help" class="text-xs text-muted-foreground">
+              This will be used as the baseline for all comparisons
+            </p>
+          </div>
+
+          <div class="space-y-4">
             <div class="flex items-center justify-between">
-                <h2 id="compare-heading" class="text-2xl font-semibold tracking-tight">Compare Runs</h2>
-                <div class="flex items-center space-x-2">
-                    <button
-                        id="analyze-btn"
-                        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                        disabled
-                    >
-                        <i data-lucide="play" class="mr-2 h-4 w-4"></i>
-                        Analyze
-                    </button>
-                </div>
+              <h3 class="text-lg font-medium">Comparison Runs</h3>
+              <button
+                id="add-run-btn"
+                class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+              >
+                <i data-lucide="plus" class="mr-2 h-4 w-4"></i>
+                Add Run
+              </button>
             </div>
+            <div
+              id="comparison-runs"
+              class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+              role="list"
+            ></div>
+          </div>
+        </div>
+      </section>
 
-            <!-- Base Run Input -->
-            <div class="space-y-4">
-                <div class="space-y-2">
-                    <label for="base-run-input" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Base Run <span class="text-destructive">*</span>
-                    </label>
-                    <div class="relative">
-                        <input
-                            id="base-run-input"
-                            type="text"
-                            placeholder="Paste WCL report or fight URL…"
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            aria-describedby="base-run-help"
-                        >
-                        <div id="base-run-status" class="absolute right-3 top-1/2 -translate-y-1/2" aria-live="polite"></div>
-                    </div>
-                    <p id="base-run-help" class="text-xs text-muted-foreground">
-                        This will be used as the baseline for all comparisons
-                    </p>
-                </div>
+      <div id="loading-state" class="hidden space-y-4">
+        <div class="flex items-center space-x-2">
+          <div
+            class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"
+          ></div>
+          <span class="text-sm text-muted-foreground"
+            >Analyzing reports...</span
+          >
+        </div>
+        <div class="space-y-3">
+          <div class="shimmer h-4 bg-muted rounded"></div>
+          <div class="shimmer h-4 bg-muted rounded w-3/4"></div>
+          <div class="shimmer h-4 bg-muted rounded w-1/2"></div>
+        </div>
+      </div>
 
-                <!-- Comparison Runs -->
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-medium">Comparison Runs</h3>
-                        <button
-                            id="add-run-btn"
-                            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
-                        >
-                            <i data-lucide="plus" class="mr-2 h-4 w-4"></i>
-                            Add Run
-                        </button>
-                    </div>
-                    <div id="comparison-runs" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="list">
-                        <!-- Comparison run cards will be added here -->
-                    </div>
-                </div>
-            </div>
-        </section>
+      <div id="error-state" class="hidden">
+        <div class="rounded-lg border border-destructive bg-destructive/10 p-4">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="alert-circle" class="h-4 w-4 text-destructive"></i>
+            <h3 class="text-sm font-medium text-destructive">Error</h3>
+          </div>
+          <p id="error-message" class="mt-2 text-sm text-destructive/80"></p>
+        </div>
+      </div>
 
-        <!-- Loading State -->
-        <div id="loading-state" class="hidden space-y-4">
-            <div class="flex items-center space-x-2">
-                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                <span class="text-sm text-muted-foreground">Analyzing reports...</span>
-            </div>
-            <div class="space-y-3">
-                <div class="shimmer h-4 bg-muted rounded"></div>
-                <div class="shimmer h-4 bg-muted rounded w-3/4"></div>
-                <div class="shimmer h-4 bg-muted rounded w-1/2"></div>
-            </div>
+      <div id="empty-state" class="text-center py-12">
+        <div class="mx-auto max-w-md">
+          <i
+            data-lucide="bar-chart-3"
+            class="mx-auto h-12 w-12 text-muted-foreground"
+          ></i>
+          <h3 class="mt-4 text-lg font-semibold">Ready to analyze</h3>
+          <p class="mt-2 text-sm text-muted-foreground">
+            Add a Base Run to begin. You can paste multiple comparison URLs to
+            see detailed performance differences.
+          </p>
+        </div>
+      </div>
+
+      <section
+        id="filters-section"
+        class="hidden space-y-4"
+        aria-labelledby="filters-heading"
+      >
+        <h2 id="filters-heading" class="text-xl font-semibold tracking-tight">
+          Filters
+        </h2>
+        <div class="flex flex-wrap gap-4">
+          <div class="flex items-center space-x-2">
+            <label for="boss-filter" class="text-sm font-medium">Bosses:</label>
+            <select
+              id="boss-filter"
+              class="flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="all">All Bosses</option>
+            </select>
+          </div>
+          <div class="flex items-center space-x-2">
+            <label for="delta-filter" class="text-sm font-medium"
+              >Min Delta:</label
+            >
+            <select
+              id="delta-filter"
+              class="flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="0">Show All</option>
+              <option value="5000">≥5s difference</option>
+              <option value="10000">≥10s difference</option>
+              <option value="30000">≥30s difference</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="results-section"
+        class="hidden space-y-6"
+        aria-labelledby="results-heading"
+      >
+        <div class="flex items-center justify-between">
+          <h2 id="results-heading" class="text-xl font-semibold tracking-tight">
+            Comparison Results
+          </h2>
+          <div class="flex items-center space-x-2">
+            <button
+              id="export-csv-btn"
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+            >
+              <i data-lucide="download" class="mr-2 h-4 w-4"></i>
+              Export CSV
+            </button>
+            <button
+              id="share-btn"
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+            >
+              <i data-lucide="share" class="mr-2 h-4 w-4"></i>
+              Share
+            </button>
+          </div>
         </div>
 
-        <!-- Error State -->
-        <div id="error-state" class="hidden">
-            <div class="rounded-lg border border-destructive bg-destructive/10 p-4">
-                <div class="flex items-center space-x-2">
-                    <i data-lucide="alert-circle" class="h-4 w-4 text-destructive"></i>
-                    <h3 class="text-sm font-medium text-destructive">Error</h3>
-                </div>
-                <p id="error-message" class="mt-2 text-sm text-destructive/80"></p>
-            </div>
+        <div class="rounded-md border">
+          <div class="table-container">
+            <table
+              id="results-table"
+              class="w-full"
+              role="table"
+              aria-label="Boss comparison results"
+            >
+              <thead class="sticky-header">
+                <tr role="row">
+                  <th
+                    class="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b"
+                    role="columnheader"
+                    tabindex="0"
+                    aria-sort="none"
+                  >
+                    <div class="flex items-center space-x-2">
+                      <span>Boss</span>
+                      <i data-lucide="chevron-up-down" class="h-4 w-4"></i>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="results-tbody" role="rowgroup"></tbody>
+            </table>
+          </div>
         </div>
 
-        <!-- Empty State -->
-        <div id="empty-state" class="text-center py-12">
-            <div class="mx-auto max-w-md">
-                <i data-lucide="bar-chart-3" class="mx-auto h-12 w-12 text-muted-foreground"></i>
-                <h3 class="mt-4 text-lg font-semibold">Ready to analyze</h3>
-                <p class="mt-2 text-sm text-muted-foreground">
-                    Add a Base Run to begin. You can paste multiple comparison URLs to see detailed performance differences.
-                </p>
-            </div>
+        <div id="timeline-section" class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-medium">Timeline Visualization</h3>
+            <button
+              id="timeline-fullscreen-btn"
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 w-8"
+              title="Expand timeline fullscreen"
+              aria-label="Expand timeline fullscreen"
+            >
+              <i data-lucide="maximize-2" class="h-4 w-4"></i>
+            </button>
+          </div>
+          <div class="rounded-md border">
+            <div id="timeline-container" class="space-y-3 p-4"></div>
+          </div>
+
+          <div id="timeline-close-btn" class="hidden fixed top-4 right-4 z-50">
+            <button
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 w-10"
+              aria-label="Close fullscreen timeline"
+            >
+              <i data-lucide="x" class="h-4 w-4"></i>
+            </button>
+          </div>
         </div>
-
-        <!-- Filters -->
-        <section id="filters-section" class="hidden space-y-4" aria-labelledby="filters-heading">
-            <h2 id="filters-heading" class="text-xl font-semibold tracking-tight">Filters</h2>
-            <div class="flex flex-wrap gap-4">
-                <div class="flex items-center space-x-2">
-                    <label for="boss-filter" class="text-sm font-medium">Bosses:</label>
-                    <select
-                        id="boss-filter"
-                        class="flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        <option value="all">All Bosses</option>
-                    </select>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <label for="delta-filter" class="text-sm font-medium">Min Delta:</label>
-                    <select
-                        id="delta-filter"
-                        class="flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        <option value="0">Show All</option>
-                        <option value="5000">≥5s difference</option>
-                        <option value="10000">≥10s difference</option>
-                        <option value="30000">≥30s difference</option>
-                    </select>
-                </div>
-            </div>
-        </section>
-
-        <!-- Results -->
-        <section id="results-section" class="hidden space-y-6" aria-labelledby="results-heading">
-            <div class="flex items-center justify-between">
-                <h2 id="results-heading" class="text-xl font-semibold tracking-tight">Comparison Results</h2>
-                <div class="flex items-center space-x-2">
-                    <button
-                        id="export-csv-btn"
-                        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
-                    >
-                        <i data-lucide="download" class="mr-2 h-4 w-4"></i>
-                        Export CSV
-                    </button>
-                    <button
-                        id="share-btn"
-                        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
-                    >
-                        <i data-lucide="share" class="mr-2 h-4 w-4"></i>
-                        Share
-                    </button>
-                </div>
-            </div>
-
-            <!-- Comparison Table -->
-            <div class="rounded-md border">
-                <div class="table-container">
-                    <table id="results-table" class="w-full" role="table" aria-label="Boss comparison results">
-                        <thead class="sticky-header">
-                            <tr role="row">
-                                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b" role="columnheader" tabindex="0" aria-sort="none">
-                                    <div class="flex items-center space-x-2">
-                                        <span>Boss</span>
-                                        <i data-lucide="chevron-up-down" class="h-4 w-4"></i>
-                                    </div>
-                                </th>
-                                <!-- Dynamic columns will be added here -->
-                            </tr>
-                        </thead>
-                        <tbody id="results-tbody" role="rowgroup">
-                            <!-- Results will be populated here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Timeline Visualization -->
-            <div id="timeline-section" class="space-y-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium">Timeline Visualization</h3>
-                    <button
-                        id="timeline-fullscreen-btn"
-                        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 w-8"
-                        title="Expand timeline fullscreen"
-                        aria-label="Expand timeline fullscreen"
-                    >
-                        <i data-lucide="maximize-2" class="h-4 w-4"></i>
-                    </button>
-                </div>
-                <div id="timeline-container" class="space-y-3">
-                    <!-- Timeline will be populated here -->
-                </div>
-                
-                <!-- Fullscreen close button (hidden by default) -->
-                <div id="timeline-close-btn" class="hidden fixed top-4 right-4 z-50">
-                    <button
-                        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 w-10"
-                        aria-label="Close fullscreen timeline"
-                    >
-                        <i data-lucide="x" class="h-4 w-4"></i>
-                    </button>
-                </div>
-            </div>
-        </section>
+      </section>
     </main>
 
-    <!-- Help Modal -->
-    <div id="help-modal" class="fixed inset-0 z-50 hidden bg-background/80 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
-        <div class="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 rounded-lg">
-            <div class="flex flex-col space-y-1.5 text-center sm:text-left">
-                <h2 id="help-modal-title" class="text-lg font-semibold leading-none tracking-tight">Keyboard Shortcuts</h2>
-            </div>
-            <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <span>Analyze</span>
-                            <kbd class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">Enter</kbd>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Add Run</span>
-                            <kbd class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">Ctrl+N</kbd>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Toggle Theme</span>
-                            <kbd class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">Ctrl+D</kbd>
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <span>Export CSV</span>
-                            <kbd class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">Ctrl+E</kbd>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Help</span>
-                            <kbd class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">?</kbd>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Close Modal</span>
-                            <kbd class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">Esc</kbd>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
-                <button
-                    id="help-modal-close"
-                    class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                >
-                    Got it
-                </button>
-            </div>
+    <div
+      id="help-modal"
+      class="fixed inset-0 z-50 hidden bg-background/80 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="help-modal-title"
+    >
+      <div
+        class="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 rounded-lg"
+      >
+        <div class="flex flex-col space-y-1.5 text-center sm:text-left">
+          <h2
+            id="help-modal-title"
+            class="text-lg font-semibold leading-none tracking-tight"
+          >
+            Keyboard Shortcuts
+          </h2>
         </div>
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div class="space-y-2">
+              <div class="flex justify-between">
+                <span>Analyze</span>
+                <kbd
+                  class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground"
+                  >Enter</kbd
+                >
+              </div>
+              <div class="flex justify-between">
+                <span>Add Run</span>
+                <kbd
+                  class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground"
+                  >Ctrl+N</kbd
+                >
+              </div>
+              <div class="flex justify-between">
+                <span>Toggle Theme</span>
+                <kbd
+                  class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground"
+                  >Ctrl+D</kbd
+                >
+              </div>
+            </div>
+            <div class="space-y-2">
+              <div class="flex justify-between">
+                <span>Export CSV</span>
+                <kbd
+                  class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground"
+                  >Ctrl+E</kbd
+                >
+              </div>
+              <div class="flex justify-between">
+                <span>Help</span>
+                <kbd
+                  class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground"
+                  >?</kbd
+                >
+              </div>
+              <div class="flex justify-between">
+                <span>Close Modal</span>
+                <kbd
+                  class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground"
+                  >Esc</kbd
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"
+        >
+          <button
+            id="help-modal-close"
+            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+          >
+            Got it
+          </button>
+        </div>
+      </div>
     </div>
 
-
-    <!-- Toast Container -->
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2" aria-live="polite"></div>
+    <div
+      id="toast-container"
+      class="fixed bottom-4 right-4 z-50 space-y-2"
+      aria-live="polite"
+    ></div>
 
     <script>
-        // Initialize Lucide icons
+      // Initialize Lucide icons
+      lucide.createIcons();
+
+      // Global state
+      let currentData = null;
+      let runCounter = 0;
+      let sortState = { column: null, direction: "asc" };
+      const maxRuns = 8;
+      const runColors = [
+        "rgb(59, 130, 246)", // blue
+        "rgb(16, 185, 129)", // emerald
+        "rgb(245, 101, 101)", // red
+        "rgb(251, 191, 36)", // amber
+        "rgb(139, 92, 246)", // violet
+        "rgb(236, 72, 153)", // pink
+        "rgb(6, 182, 212)", // cyan
+        "rgb(34, 197, 94)", // green
+      ];
+
+      // DOM elements
+      const elements = {
+        baseRunInput: document.getElementById("base-run-input"),
+        baseRunStatus: document.getElementById("base-run-status"),
+        comparisonRuns: document.getElementById("comparison-runs"),
+        addRunBtn: document.getElementById("add-run-btn"),
+        analyzeBtn: document.getElementById("analyze-btn"),
+        themeToggle: document.getElementById("theme-toggle"),
+        helpButton: document.getElementById("help-button"),
+        helpModal: document.getElementById("help-modal"),
+        helpModalClose: document.getElementById("help-modal-close"),
+        loadingState: document.getElementById("loading-state"),
+        errorState: document.getElementById("error-state"),
+        errorMessage: document.getElementById("error-message"),
+        emptyState: document.getElementById("empty-state"),
+        filtersSection: document.getElementById("filters-section"),
+        resultsSection: document.getElementById("results-section"),
+        resultsTable: document.getElementById("results-table"),
+        resultsTbody: document.getElementById("results-tbody"),
+        timelineContainer: document.getElementById("timeline-container"),
+        timelineFullscreenBtn: document.getElementById(
+          "timeline-fullscreen-btn"
+        ),
+        bossFilter: document.getElementById("boss-filter"),
+        deltaFilter: document.getElementById("delta-filter"),
+        exportCsvBtn: document.getElementById("export-csv-btn"),
+        shareBtn: document.getElementById("share-btn"),
+        toastContainer: document.getElementById("toast-container"),
+      };
+
+      // Utility functions
+      function formatTimestamp(ms, includeHours = true) {
+        if (ms === null || ms === undefined) return "---";
+
+        let delta = Math.abs(ms) / 1000;
+        const days = Math.floor(delta / 86400);
+        delta -= days * 86400;
+        const hours = Math.floor(delta / 3600) % 24;
+        delta -= hours * 3600;
+        const minutes = Math.floor(delta / 60) % 60;
+        delta -= minutes * 60;
+        const seconds = Math.floor(delta % 60);
+
+        const secondsString = seconds < 10 ? "0" + seconds : seconds.toString();
+        const minutesString = minutes < 10 ? "0" + minutes : minutes.toString();
+
+        if (includeHours) {
+          return hours + ":" + minutesString + ":" + secondsString;
+        } else {
+          return minutesString + ":" + secondsString;
+        }
+      }
+
+      function formatDelta(delta) {
+        if (delta === null || delta === undefined) return "";
+
+        const formatted = formatTimestamp(Math.abs(delta), false);
+        if (delta > 0) return `+${formatted}`;
+        if (delta < 0) return `-${formatted}`;
+        return formatted;
+      }
+
+      function getDeltaClass(delta) {
+        if (delta === null || delta === undefined) return "delta-neutral";
+        if (delta > 0) return "delta-slower";
+        if (delta < 0) return "delta-faster";
+        return "delta-neutral";
+      }
+
+      function showToast(message, type = "info") {
+        const toast = document.createElement("div");
+        toast.className = `rounded-lg border p-4 shadow-lg transition-all duration-300 transform translate-x-full opacity-0 ${
+          type === "error"
+            ? "border-destructive bg-destructive/10 text-destructive"
+            : type === "success"
+            ? "border-green-500 bg-green-500/10 text-green-500"
+            : "border-border bg-card text-card-foreground"
+        }`;
+
+        toast.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <i data-lucide="${
+              type === "error"
+                ? "alert-circle"
+                : type === "success"
+                ? "check-circle"
+                : "info"
+            }" class="h-4 w-4"></i>
+            <span class="text-sm">${message}</span>
+          </div>`;
+
+        elements.toastContainer.appendChild(toast);
         lucide.createIcons();
 
-        // Global state
-        let currentData = null;
-        let runCounter = 0;
-        let sortState = { column: null, direction: 'asc' };
-        const maxRuns = 8;
-        const runColors = [
-            'rgb(59, 130, 246)',   // blue
-            'rgb(16, 185, 129)',   // emerald
-            'rgb(245, 101, 101)',  // red
-            'rgb(251, 191, 36)',   // amber
-            'rgb(139, 92, 246)',   // violet
-            'rgb(236, 72, 153)',   // pink
-            'rgb(6, 182, 212)',    // cyan
-            'rgb(34, 197, 94)',    // green
-        ];
+        setTimeout(() => {
+          toast.classList.remove("translate-x-full", "opacity-0");
+        }, 100);
 
-        // DOM elements
-        const elements = {
-            baseRunInput: document.getElementById('base-run-input'),
-            baseRunStatus: document.getElementById('base-run-status'),
-            comparisonRuns: document.getElementById('comparison-runs'),
-            addRunBtn: document.getElementById('add-run-btn'),
-            analyzeBtn: document.getElementById('analyze-btn'),
-            themeToggle: document.getElementById('theme-toggle'),
-            helpButton: document.getElementById('help-button'),
-            helpModal: document.getElementById('help-modal'),
-            helpModalClose: document.getElementById('help-modal-close'),
-            loadingState: document.getElementById('loading-state'),
-            errorState: document.getElementById('error-state'),
-            errorMessage: document.getElementById('error-message'),
-            emptyState: document.getElementById('empty-state'),
-            filtersSection: document.getElementById('filters-section'),
-            resultsSection: document.getElementById('results-section'),
-            resultsTable: document.getElementById('results-table'),
-            resultsTbody: document.getElementById('results-tbody'),
-            timelineContainer: document.getElementById('timeline-container'),
-            timelineFullscreenBtn: document.getElementById('timeline-fullscreen-btn'),
-            bossFilter: document.getElementById('boss-filter'),
-            deltaFilter: document.getElementById('delta-filter'),
-            exportCsvBtn: document.getElementById('export-csv-btn'),
-            shareBtn: document.getElementById('share-btn'),
-            toastContainer: document.getElementById('toast-container')
+        setTimeout(() => {
+          toast.classList.add("translate-x-full", "opacity-0");
+          setTimeout(() => toast.remove(), 300);
+        }, 5000);
+      }
+
+      function validateUrl(url) {
+        if (!url || !url.trim())
+          return { valid: false, message: "URL is required" };
+
+        const trimmedUrl = url.trim();
+        if (!trimmedUrl.includes("warcraftlogs.com/reports/")) {
+          return { valid: false, message: "Invalid WCL URL format" };
+        }
+
+        return { valid: true, message: "Valid URL" };
+      }
+
+      function updateUrlStatus(inputElement, statusElement) {
+        const validation = validateUrl(inputElement.value);
+
+        if (!inputElement.value.trim()) {
+          statusElement.innerHTML = "";
+          return;
+        }
+
+        statusElement.innerHTML = validation.valid
+          ? '<i data-lucide="check-circle" class="h-4 w-4 text-green-500"></i>'
+          : '<i data-lucide="alert-circle" class="h-4 w-4 text-destructive"></i>';
+
+        statusElement.title = validation.valid ? "" : validation.message;
+        lucide.createIcons();
+      }
+
+      function updateAnalyzeButton() {
+        const baseUrl = elements.baseRunInput.value.trim();
+        const hasValidBase = validateUrl(baseUrl).valid;
+        elements.analyzeBtn.disabled = !hasValidBase;
+      }
+
+      function createRunCard(index) {
+        const color = runColors[index % runColors.length];
+        const card = document.createElement("div");
+        card.className = "run-card rounded-lg border bg-card p-4 space-y-3";
+        card.setAttribute("data-run-index", index);
+        card.setAttribute("role", "listitem");
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <div class="w-3 h-3 rounded-full" style="background-color: ${color}"></div>
+              <input type="text" class="run-label bg-transparent border-none p-0 text-sm font-medium focus:outline-none focus:ring-0" value="Run ${
+                index + 1
+              }" maxlength="20">
+            </div>
+            <div class="flex items-center space-x-1">
+              <button class="drag-handle p-1 hover:bg-accent rounded cursor-grab" aria-label="Drag to reorder">
+                <i data-lucide="grip-vertical" class="h-4 w-4 text-muted-foreground"></i>
+              </button>
+              <button class="remove-run p-1 hover:bg-destructive/10 hover:text-destructive rounded" aria-label="Remove run">
+                <i data-lucide="x" class="h-4 w-4"></i>
+              </button>
+            </div>
+          </div>
+          <div class="space-y-2">
+            <input type="text" class="run-url flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" placeholder="Paste comparison URL…">
+            <div class="flex items-center justify-between text-xs text-muted-foreground">
+              <div class="run-status flex items-center space-x-1"><span>Ready</span></div>
+              <div class="run-actions">
+                <button class="hide-run text-xs hover:text-foreground" aria-label="Hide from results">Hide</button>
+              </div>
+            </div>
+          </div>`;
+
+        const urlInput = card.querySelector(".run-url");
+        const statusDiv = card.querySelector(".run-status");
+        const removeBtn = card.querySelector(".remove-run");
+        const hideBtn = card.querySelector(".hide-run");
+
+        urlInput.addEventListener("input", () => {
+          updateUrlStatus(urlInput, statusDiv);
+          updateAnalyzeButton();
+        });
+
+        removeBtn.addEventListener("click", () => {
+          card.remove();
+          runCounter--;
+          updateAnalyzeButton();
+          updateAddRunButton();
+        });
+
+        hideBtn.addEventListener("click", () => {
+          card.classList.toggle("opacity-50");
+          hideBtn.textContent = card.classList.contains("opacity-50")
+            ? "Show"
+            : "Hide";
+        });
+
+        return card;
+      }
+
+      function updateAddRunButton() {
+        elements.addRunBtn.disabled = runCounter >= maxRuns;
+        elements.addRunBtn.innerHTML =
+          runCounter >= maxRuns
+            ? '<i data-lucide="plus" class="mr-2 h-4 w-4"></i>Maximum reached'
+            : '<i data-lucide="plus" class="mr-2 h-4 w-4"></i>Add Run';
+
+        lucide.createIcons();
+        setupRowHoverBehavior();
+        updateDeltaDisplay();
+      }
+
+      function addComparisonRun() {
+        if (runCounter >= maxRuns) return;
+
+        const card = createRunCard(runCounter);
+        elements.comparisonRuns.appendChild(card);
+        runCounter++;
+
+        updateAddRunButton();
+        lucide.createIcons();
+
+        const urlInput = card.querySelector(".run-url");
+        urlInput.focus();
+      }
+
+      function collectRunData() {
+        const runs = [elements.baseRunInput.value.trim()];
+        const runCards = elements.comparisonRuns.querySelectorAll(
+          ".run-card:not(.opacity-50)"
+        );
+        runCards.forEach((card) => {
+          const urlInput = card.querySelector(".run-url");
+          const url = urlInput.value.trim();
+          if (url) runs.push(url);
+        });
+        return runs;
+      }
+
+      function showState(state) {
+        elements.loadingState.classList.add("hidden");
+        elements.errorState.classList.add("hidden");
+        elements.emptyState.classList.add("hidden");
+        elements.resultsSection.classList.add("hidden");
+        elements.filtersSection.classList.add("hidden");
+
+        switch (state) {
+          case "loading":
+            elements.loadingState.classList.remove("hidden");
+            break;
+          case "error":
+            elements.errorState.classList.remove("hidden");
+            break;
+          case "results":
+            elements.resultsSection.classList.remove("hidden");
+            elements.filtersSection.classList.remove("hidden");
+            break;
+          default:
+            elements.emptyState.classList.remove("hidden");
+        }
+      }
+
+      function showError(message) {
+        elements.errorMessage.textContent = message;
+        showState("error");
+        showToast(message, "error");
+      }
+
+      async function analyzeReports() {
+        const runs = collectRunData();
+        if (runs.length === 0 || !runs[0]) {
+          showError("Please enter at least a base run URL.");
+          return;
+        }
+
+        for (const url of runs) {
+          const validation = validateUrl(url);
+          if (!validation.valid) {
+            showError(`Invalid URL: ${validation.message}`);
+            return;
+          }
+        }
+
+        showState("loading");
+        elements.analyzeBtn.disabled = true;
+
+        try {
+          const response = await fetch("/api/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reports: runs }),
+          });
+
+          const data = await response.json();
+          if (!response.ok)
+            throw new Error(data.error || "Failed to analyze reports");
+
+          currentData = data;
+          displayResults(data);
+          displayTimeline(data);
+          showState("results");
+          showToast("Analysis complete!", "success");
+        } catch (error) {
+          console.error("Error:", error);
+          showError(`Error analyzing reports: ${error.message}`);
+        } finally {
+          elements.analyzeBtn.disabled = false;
+        }
+      }
+
+      function displayResults(data) {
+        if (!data.results || data.results.length === 0) {
+          showError("No valid results found in the reports.");
+          return;
+        }
+
+        const validResults = data.results.filter((r) => r && !r.error);
+        if (validResults.length === 0) {
+          showError("No valid results found in the reports.");
+          return;
+        }
+
+        // Clear existing content
+        const thead = elements.resultsTable.querySelector("thead tr");
+        const tbody = elements.resultsTbody;
+        while (thead.children.length > 1) thead.removeChild(thead.lastChild);
+        tbody.innerHTML = "";
+
+        // Add run columns (no Best Segments column anymore)
+        validResults.forEach((result, index) => {
+          const th = document.createElement("th");
+          th.className =
+            "h-12 px-4 text-center align-middle font-medium text-muted-foreground border-b";
+          th.setAttribute("role", "columnheader");
+          th.setAttribute("tabindex", "0");
+          th.setAttribute("aria-sort", "none");
+
+          const color = runColors[index % runColors.length];
+          th.innerHTML = `
+            <div class="flex items-center justify-center space-x-2">
+              <div class="w-2 h-2 rounded-full" style="background-color: ${color}"></div>
+              <span>${result.title || `Run ${index + 1}`}</span>
+              <i data-lucide="chevron-up-down" class="h-4 w-4"></i>
+            </div>`;
+          thead.appendChild(th);
+        });
+
+        // Boss order from base run (by defeat times)
+        const base = validResults[0];
+        const baseBossOrder = (base.fights || [])
+          .filter((f) => f.is_boss && !f.name.includes("(Trash)"))
+          .sort((a, b) => a.end_time_rel - b.end_time_rel)
+          .map((f) => f.name);
+
+        // Rows per boss
+        baseBossOrder.forEach((bossName) => {
+          const row = document.createElement("tr");
+          row.className = "border-b transition-colors hover:bg-muted/50";
+          row.setAttribute("role", "row");
+
+          const bossCell = document.createElement("td");
+          bossCell.className = "p-4 align-middle font-medium";
+          bossCell.innerHTML = `
+            <div class="flex items-center space-x-2">
+              <i data-lucide="sword" class="h-4 w-4 text-muted-foreground"></i>
+              <span>${bossName}</span>
+            </div>`;
+          row.appendChild(bossCell);
+
+          const baseFight = base.fights?.find(
+            (f) => f.is_boss && f.name === bossName
+          );
+          const baseEndTime = baseFight ? baseFight.end_time_rel : null;
+
+          validResults.forEach((result, index) => {
+            const cell = document.createElement("td");
+            cell.className = "p-4 align-middle text-center font-mono text-sm";
+
+            const fight = result.fights?.find(
+              (f) => f.is_boss && f.name === bossName
+            );
+
+            if (fight && fight.end_time_rel != null) {
+              const timeStr = formatTimestamp(fight.end_time_rel, true);
+              let content = `<div class="font-semibold">${timeStr}</div>`;
+
+              if (index > 0 && baseEndTime != null) {
+                const totalDelta =
+                  Math.round((fight.end_time_rel - baseEndTime) / 1000) * 1000;
+                const totalDeltaStr = formatDelta(totalDelta);
+                const totalDeltaClass = getDeltaClass(totalDelta);
+
+                // Boss fight duration delta ("B:" chip)
+                let bossFightDelta = null;
+                let bossFightDeltaStr = "";
+                let bossFightDeltaClass = "delta-neutral";
+
+                const baseFightForBoss = base.fights?.find(
+                  (f) => f.is_boss && f.name === bossName
+                );
+                if (baseFightForBoss) {
+                  const curDur = fight.end_time_rel - fight.start_time_rel;
+                  const baseDur =
+                    baseFightForBoss.end_time_rel -
+                    baseFightForBoss.start_time_rel;
+                  bossFightDelta = Math.round((curDur - baseDur) / 1000) * 1000;
+                  bossFightDeltaStr = formatDelta(bossFightDelta);
+                  bossFightDeltaClass = getDeltaClass(bossFightDelta);
+                }
+
+                content +=
+                  '<div class="flex flex-wrap gap-1 justify-center mt-1" data-delta-chips>';
+                content += `<div class="delta-pill ${totalDeltaClass}" data-delta-type="total" title="Δ Total vs ${
+                  base.title || "Base Run"
+                }: ${totalDeltaStr}">
+                  <i data-lucide="${
+                    totalDelta < 0
+                      ? "trending-down"
+                      : totalDelta > 0
+                      ? "trending-up"
+                      : "minus"
+                  }" class="h-3 w-3"></i>${totalDeltaStr}</div>`;
+
+                if (bossFightDelta != null) {
+                  content += `<div class="delta-pill ${bossFightDeltaClass}" data-delta-type="boss" title="Δ Boss vs ${
+                    base.title || "Base Run"
+                  }: ${bossFightDeltaStr}">
+                    <i data-lucide="${
+                      bossFightDelta < 0
+                        ? "trending-down"
+                        : bossFightDelta > 0
+                        ? "trending-up"
+                        : "minus"
+                    }" class="h-3 w-3"></i><span class="font-mono">B: ${bossFightDeltaStr}</span></div>`;
+                }
+
+                content += "</div>";
+              }
+
+              cell.innerHTML = content;
+            } else {
+              cell.innerHTML = '<span class="text-muted-foreground">—</span>';
+            }
+
+            row.appendChild(cell);
+          });
+
+          elements.resultsTbody.appendChild(row);
+        });
+
+        // Total row (per run only)
+        const totalRow = document.createElement("tr");
+        totalRow.className = "border-b-2 bg-muted/20 font-semibold";
+
+        const totalBossCell = document.createElement("td");
+        totalBossCell.className = "p-4 align-middle font-semibold";
+        totalBossCell.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <i data-lucide="clock" class="h-4 w-4 text-muted-foreground"></i>
+            <span>Total Run Time</span>
+          </div>`;
+        totalRow.appendChild(totalBossCell);
+
+        const baseTotal = validResults[0].total_duration;
+        validResults.forEach((result, index) => {
+          const cell = document.createElement("td");
+          cell.className =
+            "p-4 align-middle text-center font-mono text-sm font-semibold";
+
+          if (result.total_duration != null) {
+            const timeStr = formatTimestamp(result.total_duration, true);
+            let content = `<div class="text-lg">${timeStr}</div>`;
+
+            if (index > 0) {
+              const delta =
+                Math.round((result.total_duration - baseTotal) / 1000) * 1000;
+              const deltaStr = formatDelta(delta);
+              const deltaClass = getDeltaClass(delta);
+              content += `<div class="delta-pill ${deltaClass} mt-1">
+                <i data-lucide="${
+                  delta < 0
+                    ? "trending-down"
+                    : delta > 0
+                    ? "trending-up"
+                    : "minus"
+                }" class="h-3 w-3"></i>${deltaStr}</div>`;
+            }
+
+            cell.innerHTML = content;
+          } else {
+            cell.innerHTML = '<span class="text-muted-foreground">—</span>';
+          }
+
+          totalRow.appendChild(cell);
+        });
+
+        elements.resultsTbody.appendChild(totalRow);
+
+        // Populate filter dropdown from base order
+        elements.bossFilter.innerHTML =
+          '<option value="all">All Bosses</option>';
+        baseBossOrder.forEach((bossName) => {
+          const option = document.createElement("option");
+          option.value = bossName;
+          option.textContent = bossName;
+          elements.bossFilter.appendChild(option);
+        });
+
+        lucide.createIcons();
+      }
+
+      // Boss name abbreviation (for timeline)
+      function abbreviateBossName(name) {
+        const bossMap = {
+          "The Prophet Skeram": "Skeram",
+          "Battleguard Sartura": "Sartura",
+          "Fankriss the Unyielding": "Fankriss",
+          "Princess Huhuran": "Huhuran",
+          "Twin Emperors": "Twins",
+          Viscidus: "Visc",
+          Ouro: "Ouro",
+          "C'Thun": "C'Thun",
         };
+        if (bossMap[name]) return bossMap[name];
 
-        // Utility functions
-        function formatTimestamp(ms, includeHours = true) {
-            if (ms === null || ms === undefined) return "---";
-            
-            let delta = Math.abs(ms) / 1000;
-            const days = Math.floor(delta / 86400);
-            delta -= days * 86400;
-            const hours = Math.floor(delta / 3600) % 24;
-            delta -= hours * 3600;
-            const minutes = Math.floor(delta / 60) % 60;
-            delta -= minutes * 60;
-            const seconds = Math.floor(delta % 60);
+        let abbreviated = name
+          .replace(/^(The|the)\s+/, "")
+          .replace(/\s+(of|the)\s+/g, " ")
+          .replace(/,/g, "");
+        const words = abbreviated.split(" ");
+        if (words.length > 1) abbreviated = words[0];
+        if (abbreviated.length > 8)
+          abbreviated = abbreviated.substring(0, 6) + "…";
+        return abbreviated;
+      }
 
-            const secondsString = seconds < 10 ? "0" + seconds : seconds.toString();
-            const minutesString = minutes < 10 ? "0" + minutes : minutes.toString();
+      function fitLabel(text, availableWidth, padding = 8) {
+        const innerWidth = availableWidth - padding * 2;
+        if (innerWidth < 36) return null;
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        const fontSizes = [12, 11, 10];
+        for (const fontSize of fontSizes) {
+          context.font = `${fontSize}px Inter, system-ui, sans-serif`;
+          if (context.measureText(text).width <= innerWidth)
+            return { text, fontSize };
+        }
+        return null;
+      }
 
-            if (includeHours) {
-                return hours + ":" + minutesString + ":" + secondsString;
-            } else {
-                return minutesString + ":" + secondsString;
-            }
+      function displayTimeline(data) {
+        if (!data.results || data.results.length === 0) return;
+
+        const validResults = data.results.filter((r) => r && !r.error);
+        if (validResults.length === 0) return;
+
+        elements.timelineContainer.innerHTML = "";
+
+        let maxTime = 0;
+        validResults.forEach((r) => {
+          if (r.total_duration > maxTime) maxTime = r.total_duration;
+        });
+
+        const scaleContainer = document.createElement("div");
+        scaleContainer.className = "relative mb-4";
+
+        const scaleDiv = document.createElement("div");
+        scaleDiv.className =
+          "flex justify-between text-xs text-muted-foreground mb-1";
+        scaleDiv.style.marginLeft = "calc(6rem + 1rem)";
+        scaleDiv.style.marginRight = "0";
+        for (let i = 0; i <= 10; i++) {
+          const time = (maxTime * i) / 10;
+          const span = document.createElement("span");
+          span.textContent = formatTimestamp(time, true);
+          scaleDiv.appendChild(span);
+        }
+        scaleContainer.appendChild(scaleDiv);
+
+        const ticksDiv = document.createElement("div");
+        ticksDiv.className = "relative h-2 bg-muted rounded-sm";
+        ticksDiv.style.marginLeft = "calc(6rem + 1rem)";
+        ticksDiv.style.marginRight = "0";
+
+        for (let i = 0; i <= 10; i++) {
+          const tick = document.createElement("div");
+          tick.className = "absolute w-0.5 h-full bg-muted-foreground/60";
+          tick.style.left = `${i * 10}%`;
+          tick.style.transform = "translateX(-50%)";
+          ticksDiv.appendChild(tick);
         }
 
-        function formatDelta(delta) {
-            if (delta === null || delta === undefined) return "";
-            
-            const formatted = formatTimestamp(Math.abs(delta), false);
-            if (delta > 0) {
-                return `+${formatted}`;
-            } else if (delta < 0) {
-                return `-${formatted}`;
-            } else {
-                return formatted;
-            }
+        for (let i = 2; i <= 48; i += 2) {
+          if (i % 10 !== 0) {
+            const tick = document.createElement("div");
+            tick.className =
+              "absolute w-0.5 h-1/2 bg-muted-foreground/30 top-1/4";
+            tick.style.left = `${i}%`;
+            tick.style.transform = "translateX(-50%)";
+            ticksDiv.appendChild(tick);
+          }
         }
 
-        function getDeltaClass(delta) {
-            if (delta === null || delta === undefined) return "delta-neutral";
-            if (delta > 0) return "delta-slower";
-            if (delta < 0) return "delta-faster";
-            return "delta-neutral";
-        }
+        scaleContainer.appendChild(ticksDiv);
+        elements.timelineContainer.appendChild(scaleContainer);
 
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `rounded-lg border p-4 shadow-lg transition-all duration-300 transform translate-x-full opacity-0 ${
-                type === 'error' ? 'border-destructive bg-destructive/10 text-destructive' :
-                type === 'success' ? 'border-green-500 bg-green-500/10 text-green-500' :
-                'border-border bg-card text-card-foreground'
-            }`;
-            
-            toast.innerHTML = `
-                <div class="flex items-center space-x-2">
-                    <i data-lucide="${type === 'error' ? 'alert-circle' : type === 'success' ? 'check-circle' : 'info'}" class="h-4 w-4"></i>
-                    <span class="text-sm">${message}</span>
-                </div>
-            `;
-            
-            elements.toastContainer.appendChild(toast);
-            lucide.createIcons();
-            
-            // Animate in
+        validResults.forEach((result, index) => {
+          const row = document.createElement("div");
+          row.className = "flex items-center space-x-4 mb-3";
+
+          const color = runColors[index % runColors.length];
+
+          const label = document.createElement("div");
+          label.className = "w-24 text-sm font-medium text-right flex-shrink-0";
+          label.innerHTML = `
+            <div class="flex items-center justify-end space-x-2">
+              <span>${result.title || `Run ${index + 1}`}</span>
+              <div class="w-2 h-2 rounded-full" style="background-color: ${color}"></div>
+            </div>`;
+
+          const timelineBar = document.createElement("div");
+          timelineBar.className =
+            "flex-1 h-8 bg-muted rounded-md relative overflow-hidden";
+
+          if (result.timeline_data) {
             setTimeout(() => {
-                toast.classList.remove('translate-x-full', 'opacity-0');
-            }, 100);
-            
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                toast.classList.add('translate-x-full', 'opacity-0');
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        toast.parentNode.removeChild(toast);
-                    }
-                }, 300);
-            }, 5000);
+              const barWidth = timelineBar.offsetWidth;
+
+              result.timeline_data.forEach((segment) => {
+                const isTrash = !segment.is_boss;
+                const segmentDiv = document.createElement("div");
+                segmentDiv.className =
+                  "timeline-segment absolute h-full flex items-center justify-center text-xs font-medium text-white overflow-hidden";
+                segmentDiv.style.backgroundColor = isTrash
+                  ? "#707887"
+                  : "#D42F2F";
+                segmentDiv.setAttribute("role", "button");
+                segmentDiv.setAttribute("tabindex", "0");
+
+                const leftPercent = (segment.start / maxTime) * 100;
+                const widthPercent =
+                  ((segment.end - segment.start) / maxTime) * 100;
+                const segmentWidth = (widthPercent / 100) * barWidth;
+
+                segmentDiv.style.left = `${leftPercent}%`;
+                segmentDiv.style.width = `${widthPercent}%`;
+
+                const baseText = isTrash ? "Trash" : segment.name;
+                const displayText = isTrash
+                  ? "Trash"
+                  : abbreviateBossName(segment.name);
+
+                const timeRange = `${formatTimestamp(
+                  segment.start
+                )} - ${formatTimestamp(segment.end)}`;
+                segmentDiv.title = `${baseText} • ${timeRange}`;
+                segmentDiv.setAttribute(
+                  "aria-label",
+                  `${baseText}, ${timeRange}`
+                );
+
+                const fitted = fitLabel(displayText, segmentWidth, 8);
+                if (fitted) {
+                  const textSpan = document.createElement("span");
+                  textSpan.className =
+                    "block w-full text-center leading-8 font-medium overflow-hidden text-ellipsis whitespace-nowrap px-2";
+                  textSpan.style.fontSize = `${fitted.fontSize}px`;
+                  textSpan.textContent = fitted.text;
+                  segmentDiv.appendChild(textSpan);
+                }
+
+                segmentDiv.addEventListener("focus", () => {
+                  segmentDiv.style.outline = "2px solid hsl(var(--ring))";
+                  segmentDiv.style.outlineOffset = "2px";
+                });
+                segmentDiv.addEventListener("blur", () => {
+                  segmentDiv.style.outline = "none";
+                });
+
+                timelineBar.appendChild(segmentDiv);
+              });
+            }, 0);
+          }
+
+          row.appendChild(label);
+          row.appendChild(timelineBar);
+          elements.timelineContainer.appendChild(row);
+        });
+      }
+
+      function exportToCsv() {
+        if (!currentData || !currentData.results) {
+          showToast("No data to export", "error");
+          return;
         }
 
-        function validateUrl(url) {
-            if (!url || !url.trim()) return { valid: false, message: 'URL is required' };
-            
-            const trimmedUrl = url.trim();
-            if (!trimmedUrl.includes('warcraftlogs.com/reports/')) {
-                return { valid: false, message: 'Invalid WCL URL format' };
-            }
-            
-            return { valid: true, message: 'Valid URL' };
+        const validResults = currentData.results.filter(
+          (result) => result && !result.error
+        );
+        if (validResults.length === 0) {
+          showToast("No valid data to export", "error");
+          return;
         }
 
-        function updateUrlStatus(inputElement, statusElement) {
-            const validation = validateUrl(inputElement.value);
-            
-            if (!inputElement.value.trim()) {
-                statusElement.innerHTML = '';
-                return;
-            }
-            
-            if (validation.valid) {
-                statusElement.innerHTML = '<i data-lucide="check-circle" class="h-4 w-4 text-green-500"></i>';
+        // Base order from base run
+        const base = validResults[0];
+        const baseOrder = (base.fights || [])
+          .filter((f) => f.is_boss && !f.name.includes("(Trash)"))
+          .sort((a, b) => a.end_time_rel - b.end_time_rel)
+          .map((f) => f.name);
+
+        let csvContent = "Boss";
+        validResults.forEach((result, index) => {
+          csvContent += `,${result.title || `Run ${index + 1}`}`;
+        });
+        csvContent += "\n";
+
+        baseOrder.forEach((bossName) => {
+          csvContent += `"${bossName}"`;
+          validResults.forEach((result) => {
+            const fight = result.fights?.find(
+              (f) => f.is_boss && f.name === bossName
+            );
+            if (fight && fight.end_time_rel != null) {
+              csvContent += `,${formatTimestamp(fight.end_time_rel, true)}`;
             } else {
-                statusElement.innerHTML = '<i data-lucide="alert-circle" class="h-4 w-4 text-destructive"></i>';
-                statusElement.title = validation.message;
+              csvContent += ",—";
             }
-            
-            lucide.createIcons();
-        }
-
-        function updateAnalyzeButton() {
-            const baseUrl = elements.baseRunInput.value.trim();
-            const hasValidBase = validateUrl(baseUrl).valid;
-            
-            elements.analyzeBtn.disabled = !hasValidBase;
-        }
-
-        function createRunCard(index) {
-            const color = runColors[index % runColors.length];
-            const card = document.createElement('div');
-            card.className = 'run-card rounded-lg border bg-card p-4 space-y-3';
-            card.setAttribute('data-run-index', index);
-            card.setAttribute('role', 'listitem');
-            
-            card.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-3 h-3 rounded-full" style="background-color: ${color}"></div>
-                        <input
-                            type="text"
-                            class="run-label bg-transparent border-none p-0 text-sm font-medium focus:outline-none focus:ring-0"
-                            value="Run ${index + 1}"
-                            maxlength="20"
-                        >
-                    </div>
-                    <div class="flex items-center space-x-1">
-                        <button class="drag-handle p-1 hover:bg-accent rounded cursor-grab" aria-label="Drag to reorder">
-                            <i data-lucide="grip-vertical" class="h-4 w-4 text-muted-foreground"></i>
-                        </button>
-                        <button class="remove-run p-1 hover:bg-destructive/10 hover:text-destructive rounded" aria-label="Remove run">
-                            <i data-lucide="x" class="h-4 w-4"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="space-y-2">
-                    <input
-                        type="text"
-                        class="run-url flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        placeholder="Paste comparison URL…"
-                    >
-                    <div class="flex items-center justify-between text-xs text-muted-foreground">
-                        <div class="run-status flex items-center space-x-1">
-                            <span>Ready</span>
-                        </div>
-                        <div class="run-actions">
-                            <button class="hide-run text-xs hover:text-foreground" aria-label="Hide from results">Hide</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Add event listeners
-            const urlInput = card.querySelector('.run-url');
-            const statusDiv = card.querySelector('.run-status');
-            const removeBtn = card.querySelector('.remove-run');
-            const hideBtn = card.querySelector('.hide-run');
-            
-            urlInput.addEventListener('input', () => {
-                updateUrlStatus(urlInput, statusDiv);
-                updateAnalyzeButton();
-            });
-            
-            removeBtn.addEventListener('click', () => {
-                card.remove();
-                runCounter--;
-                updateAnalyzeButton();
-                updateAddRunButton();
-            });
-            
-            hideBtn.addEventListener('click', () => {
-                card.classList.toggle('opacity-50');
-                hideBtn.textContent = card.classList.contains('opacity-50') ? 'Show' : 'Hide';
-            });
-            
-            return card;
-        }
-
-        function updateAddRunButton() {
-            elements.addRunBtn.disabled = runCounter >= maxRuns;
-            if (runCounter >= maxRuns) {
-                elements.addRunBtn.innerHTML = '<i data-lucide="plus" class="mr-2 h-4 w-4"></i>Maximum reached';
-            } else {
-                elements.addRunBtn.innerHTML = '<i data-lucide="plus" class="mr-2 h-4 w-4"></i>Add Run';
-            }
-            lucide.createIcons();
-            
-            // Set up hover behavior and initial delta display after table is populated
-            setupRowHoverBehavior();
-            updateDeltaDisplay();
-        }
-
-        function addComparisonRun() {
-            if (runCounter >= maxRuns) return;
-            
-            const card = createRunCard(runCounter);
-            elements.comparisonRuns.appendChild(card);
-            runCounter++;
-            
-            updateAddRunButton();
-            lucide.createIcons();
-            
-            // Focus the new URL input
-            const urlInput = card.querySelector('.run-url');
-            urlInput.focus();
-        }
-
-        function collectRunData() {
-            const runs = [elements.baseRunInput.value.trim()];
-            
-            const runCards = elements.comparisonRuns.querySelectorAll('.run-card:not(.opacity-50)');
-            runCards.forEach(card => {
-                const urlInput = card.querySelector('.run-url');
-                const url = urlInput.value.trim();
-                if (url) {
-                    runs.push(url);
-                }
-            });
-            
-            return runs;
-        }
-
-        function showState(state) {
-            // Hide all states
-            elements.loadingState.classList.add('hidden');
-            elements.errorState.classList.add('hidden');
-            elements.emptyState.classList.add('hidden');
-            elements.resultsSection.classList.add('hidden');
-            elements.filtersSection.classList.add('hidden');
-            
-            // Show requested state
-            switch (state) {
-                case 'loading':
-                    elements.loadingState.classList.remove('hidden');
-                    break;
-                case 'error':
-                    elements.errorState.classList.remove('hidden');
-                    break;
-                case 'results':
-                    elements.resultsSection.classList.remove('hidden');
-                    elements.filtersSection.classList.remove('hidden');
-                    break;
-                default:
-                    elements.emptyState.classList.remove('hidden');
-            }
-        }
-
-        function showError(message) {
-            elements.errorMessage.textContent = message;
-            showState('error');
-            showToast(message, 'error');
-        }
-
-        async function analyzeReports() {
-            const runs = collectRunData();
-            
-            if (runs.length === 0 || !runs[0]) {
-                showError('Please enter at least a base run URL.');
-                return;
-            }
-            
-            // Validate all URLs
-            for (const url of runs) {
-                const validation = validateUrl(url);
-                if (!validation.valid) {
-                    showError(`Invalid URL: ${validation.message}`);
-                    return;
-                }
-            }
-            
-            showState('loading');
-            elements.analyzeBtn.disabled = true;
-            
-            try {
-                const response = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        reports: runs,
-                    }),
-                });
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(data.error || 'Failed to analyze reports');
-                }
-                
-                currentData = data;
-                displayResults(data);
-                displayTimeline(data);
-                showState('results');
-                showToast('Analysis complete!', 'success');
-                
-            } catch (error) {
-                console.error('Error:', error);
-                showError(`Error analyzing reports: ${error.message}`);
-            } finally {
-                elements.analyzeBtn.disabled = false;
-            }
-        }
-
-        function displayResults(data) {
-            if (!data.results || data.results.length === 0) {
-                showError('No valid results found in the reports.');
-                return;
-            }
-            
-            const validResults = data.results.filter(result => result && !result.error);
-            if (validResults.length === 0) {
-                showError('No valid results found in the reports.');
-                return;
-            }
-            
-            // Clear existing content
-            const thead = elements.resultsTable.querySelector('thead tr');
-            const tbody = elements.resultsTbody;
-            
-            // Clear existing columns (keep boss column)
-            while (thead.children.length > 1) {
-                thead.removeChild(thead.lastChild);
-            }
-            tbody.innerHTML = '';
-            
-            // Add run columns
-            validResults.forEach((result, index) => {
-                const th = document.createElement('th');
-                th.className = 'h-12 px-4 text-center align-middle font-medium text-muted-foreground border-b';
-                th.setAttribute('role', 'columnheader');
-                th.setAttribute('tabindex', '0');
-                th.setAttribute('aria-sort', 'none');
-                
-                const color = runColors[index % runColors.length];
-                th.innerHTML = `
-                    <div class="flex items-center justify-center space-x-2">
-                        <div class="w-2 h-2 rounded-full" style="background-color: ${color}"></div>
-                        <span>${result.title || `Run ${index + 1}`}</span>
-                        <i data-lucide="chevron-up-down" class="h-4 w-4"></i>
-                    </div>
-                `;
-                thead.appendChild(th);
-            });
-            
-            // Add Best Segments column if multiple runs
-            if (validResults.length > 1) {
-                const th = document.createElement('th');
-                th.className = 'h-12 px-4 text-center align-middle font-medium border-b';
-                th.style.color = 'rgb(251, 191, 36)';
-                th.innerHTML = `
-                    <div class="flex items-center justify-center space-x-2">
-                        <i data-lucide="trophy" class="h-4 w-4"></i>
-                        <span>Best Segments</span>
-                    </div>
-                `;
-                thead.appendChild(th);
-            }
-            
-            // Calculate best segments
-            const bestSegments = {};
-            let theoreticalBestTime = 0;
-            
-            if (validResults.length > 1) {
-                // Get all unique boss names
-                const allBosses = new Set();
-                validResults.forEach(result => {
-                    if (result.fights) {
-                        result.fights.forEach(fight => {
-                            if (fight.is_boss && !fight.name.includes('(Trash)')) {
-                                allBosses.add(fight.name);
-                            }
-                        });
-                    }
-                });
-                
-                // Find best segment time for each boss
-                Array.from(allBosses).forEach(bossName => {
-                    let bestSegmentTime = null;
-                    
-                    validResults.forEach(result => {
-                        const fight = result.fights?.find(f => f.name === bossName && f.is_boss);
-                        if (fight && fight.individual_segment_time !== undefined && fight.individual_segment_time !== null) {
-                            if (bestSegmentTime === null || fight.individual_segment_time < bestSegmentTime) {
-                                bestSegmentTime = fight.individual_segment_time;
-                            }
-                        }
-                    });
-                    
-                    if (bestSegmentTime !== null) {
-                        bestSegments[bossName] = bestSegmentTime;
-                        theoreticalBestTime += bestSegmentTime;
-                    }
-                });
-            }
-            
-            // Create boss rows
-            const allBosses = new Set();
-            validResults.forEach(result => {
-                if (result.fights) {
-                    result.fights.forEach(fight => {
-                        if (fight.is_boss && !fight.name.includes('(Trash)')) {
-                            allBosses.add(fight.name);
-                        }
-                    });
-                }
-            });
-            
-            let cumulativeBestTime = 0;
-            Array.from(allBosses).forEach(bossName => {
-                const row = document.createElement('tr');
-                row.className = 'border-b transition-colors hover:bg-muted/50';
-                row.setAttribute('role', 'row');
-                
-                // Boss name cell
-                const bossCell = document.createElement('td');
-                bossCell.className = 'p-4 align-middle font-medium';
-                bossCell.innerHTML = `
-                    <div class="flex items-center space-x-2">
-                        <i data-lucide="sword" class="h-4 w-4 text-muted-foreground"></i>
-                        <span>${bossName}</span>
-                    </div>
-                `;
-                row.appendChild(bossCell);
-                
-                const baseFight = validResults[0].fights?.find(f => f.name === bossName && f.is_boss);
-                const baseEndTime = baseFight ? baseFight.end_time_rel : null;
-                
-                // Run data cells
-                validResults.forEach((result, index) => {
-                    const cell = document.createElement('td');
-                    cell.className = 'p-4 align-middle text-center font-mono text-sm';
-                    
-                    const fight = result.fights?.find(f => f.name === bossName && f.is_boss);
-                    if (fight && fight.end_time_rel !== undefined && fight.end_time_rel !== null) {
-                        const timeStr = formatTimestamp(fight.end_time_rel, true);
-                        
-                        let content = `<div class="font-semibold">${timeStr}</div>`;
-                        
-                        // Add delta chips for comparison runs
-                        if (index > 0 && baseEndTime !== null) {
-                            const baseFightForBoss = validResults[0].fights?.find(f => f.name === bossName && f.is_boss);
-                            
-                            // Calculate Total Δ (cumulative delta)
-                            const rawTotalDelta = fight.end_time_rel - baseEndTime;
-                            const totalDelta = Math.round(rawTotalDelta / 1000) * 1000;
-                            const totalDeltaStr = formatDelta(totalDelta);
-                            const totalDeltaClass = getDeltaClass(totalDelta);
-                            
-                            // Calculate Boss Fight Δ (fight duration delta)
-                            let bossFightDelta = null;
-                            let bossFightDeltaStr = '';
-                            let bossFightDeltaClass = 'delta-neutral';
-                            
-                            if (fight.boss_fight_delta !== undefined && fight.boss_fight_delta !== null) {
-                                bossFightDelta = Math.round(fight.boss_fight_delta / 1000) * 1000;
-                                bossFightDeltaStr = formatDelta(bossFightDelta);
-                                bossFightDeltaClass = getDeltaClass(bossFightDelta);
-                            } else if (baseFightForBoss) {
-                                // Fallback calculation if backend didn't provide it
-                                const currentFightDuration = fight.end_time_rel - fight.start_time_rel;
-                                const baseFightDuration = baseFightForBoss.end_time_rel - baseFightForBoss.start_time_rel;
-                                bossFightDelta = Math.round((currentFightDuration - baseFightDuration) / 1000) * 1000;
-                                bossFightDeltaStr = formatDelta(bossFightDelta);
-                                bossFightDeltaClass = getDeltaClass(bossFightDelta);
-                            }
-                            
-                            // Create chips container
-                            content += '<div class="flex flex-wrap gap-1 justify-center mt-1" data-delta-chips>';
-                            
-                            // Total Δ chip (always present for comparison runs)
-                            content += `<div class="delta-pill ${totalDeltaClass}" data-delta-type="total" title="Δ Total vs ${validResults[0].title || 'Base Run'}: ${totalDeltaStr}">
-                                <i data-lucide="${totalDelta < 0 ? 'trending-down' : totalDelta > 0 ? 'trending-up' : 'minus'}" class="h-3 w-3"></i>
-                                ${totalDeltaStr}
-                            </div>`;
-                            
-                            // Boss Fight Δ chip (always visible now)
-                            if (bossFightDelta !== null) {
-                                const currentFightDuration = fight.end_time_rel - fight.start_time_rel;
-                                const baseFightDuration = baseFightForBoss ? baseFightForBoss.end_time_rel - baseFightForBoss.start_time_rel : null;
-                                const tooltipText = baseFightDuration !== null ? 
-                                    `Δ Boss vs ${validResults[0].title || 'Base Run'}: ${bossFightDeltaStr} (This run fight: ${formatTimestamp(currentFightDuration, true)}; Base: ${formatTimestamp(baseFightDuration, true)})` :
-                                    `Δ Boss vs ${validResults[0].title || 'Base Run'}: ${bossFightDeltaStr}`;
-                                
-                                content += `<div class="delta-pill ${bossFightDeltaClass}" data-delta-type="boss" title="${tooltipText}" aria-label="Boss fight delta versus ${validResults[0].title || 'Base Run'}: ${Math.abs(bossFightDelta / 1000)} seconds ${bossFightDelta < 0 ? 'faster' : bossFightDelta > 0 ? 'slower' : 'equal'}">
-                                    <i data-lucide="${bossFightDelta < 0 ? 'trending-down' : bossFightDelta > 0 ? 'trending-up' : 'minus'}" class="h-3 w-3"></i>
-                                    <span class="font-mono">B: ${bossFightDeltaStr}</span>
-                                </div>`;
-                            } else {
-                                // Show neutral chip when no data available
-                                content += `<div class="delta-pill delta-neutral" data-delta-type="boss" title="Boss fight data not available">
-                                    <span class="font-mono">B: —</span>
-                                </div>`;
-                            }
-                            
-                            content += '</div>';
-                        }
-                        
-                        cell.innerHTML = content;
-                    } else {
-                        cell.innerHTML = '<span class="text-muted-foreground">—</span>';
-                    }
-                    
-                    row.appendChild(cell);
-                });
-                
-                // Best segment cell
-                if (validResults.length > 1) {
-                    const bestCell = document.createElement('td');
-                    bestCell.className = 'p-4 align-middle text-center font-mono text-sm';
-                    
-                    if (bestSegments[bossName] !== undefined) {
-                        cumulativeBestTime += bestSegments[bossName];
-                        const bestTimeStr = formatTimestamp(cumulativeBestTime, true);
-                        
-                        const rawCumulativeDelta = baseEndTime !== null ? cumulativeBestTime - baseEndTime : null;
-                        const cumulativeDelta = rawCumulativeDelta !== null ? Math.round(rawCumulativeDelta / 1000) * 1000 : null;
-                        const cumulativeDeltaStr = formatDelta(cumulativeDelta);
-                        const cumulativeDeltaClass = getDeltaClass(cumulativeDelta);
-                        
-                        bestCell.innerHTML = `
-                            <div class="best-segment font-semibold">${bestTimeStr}</div>
-                            <div class="delta-pill ${cumulativeDeltaClass} mt-1">
-                                <i data-lucide="${cumulativeDelta < 0 ? 'trending-down' : cumulativeDelta > 0 ? 'trending-up' : 'minus'}" class="h-3 w-3"></i>
-                                ${cumulativeDeltaStr}
-                            </div>
-                        `;
-                    } else {
-                        bestCell.innerHTML = '<span class="text-muted-foreground">—</span>';
-                    }
-                    
-                    row.appendChild(bestCell);
-                }
-                
-                tbody.appendChild(row);
-            });
-            
-            // Add total time row
-            const totalRow = document.createElement('tr');
-            totalRow.className = 'border-b-2 bg-muted/20 font-semibold';
-            
-            const totalBossCell = document.createElement('td');
-            totalBossCell.className = 'p-4 align-middle font-semibold';
-            totalBossCell.innerHTML = `
-                <div class="flex items-center space-x-2">
-                    <i data-lucide="clock" class="h-4 w-4 text-muted-foreground"></i>
-                    <span>Total Run Time</span>
-                </div>
-            `;
-            totalRow.appendChild(totalBossCell);
-            
-            const baseTotal = validResults[0].total_duration;
-            validResults.forEach((result, index) => {
-                const cell = document.createElement('td');
-                cell.className = 'p-4 align-middle text-center font-mono text-sm font-semibold';
-                
-                if (result.total_duration !== undefined && result.total_duration !== null) {
-                    const timeStr = formatTimestamp(result.total_duration, true);
-                    let content = `<div class="text-lg">${timeStr}</div>`;
-                    
-                    if (index > 0) {
-                        const rawDelta = result.total_duration - baseTotal;
-                        const delta = Math.round(rawDelta / 1000) * 1000;
-                        const deltaStr = formatDelta(delta);
-                        const deltaClass = getDeltaClass(delta);
-                        
-                        content += `<div class="delta-pill ${deltaClass} mt-1">
-                            <i data-lucide="${delta < 0 ? 'trending-down' : delta > 0 ? 'trending-up' : 'minus'}" class="h-3 w-3"></i>
-                            ${deltaStr}
-                        </div>`;
-                    }
-                    
-                    cell.innerHTML = content;
-                } else {
-                    cell.innerHTML = '<span class="text-muted-foreground">—</span>';
-                }
-                
-                totalRow.appendChild(cell);
-            });
-            
-            // Theoretical best total
-            if (validResults.length > 1) {
-                const bestTotalCell = document.createElement('td');
-                bestTotalCell.className = 'p-4 align-middle text-center font-mono text-sm font-semibold';
-                
-                const theoreticalBestStr = formatTimestamp(theoreticalBestTime, true);
-                const rawTheoreticalDelta = theoreticalBestTime - baseTotal;
-                const theoreticalDelta = Math.round(rawTheoreticalDelta / 1000) * 1000;
-                const theoreticalDeltaStr = formatDelta(theoreticalDelta);
-                const theoreticalDeltaClass = getDeltaClass(theoreticalDelta);
-                
-                bestTotalCell.innerHTML = `
-                    <div class="best-segment text-lg">${theoreticalBestStr}</div>
-                    <div class="delta-pill ${theoreticalDeltaClass} mt-1">
-                        <i data-lucide="${theoreticalDelta < 0 ? 'trending-down' : theoreticalDelta > 0 ? 'trending-up' : 'minus'}" class="h-3 w-3"></i>
-                        ${theoreticalDeltaStr}
-                    </div>
-                `;
-                
-                totalRow.appendChild(bestTotalCell);
-            }
-            
-            tbody.appendChild(totalRow);
-            
-            // Update boss filter options
-            elements.bossFilter.innerHTML = '<option value="all">All Bosses</option>';
-            Array.from(allBosses).forEach(bossName => {
-                const option = document.createElement('option');
-                option.value = bossName;
-                option.textContent = bossName;
-                elements.bossFilter.appendChild(option);
-            });
-            
-            lucide.createIcons();
-        }
-
-        // Boss name abbreviation utility
-        function abbreviateBossName(name) {
-            // Boss map overrides
-            const bossMap = {
-                'The Prophet Skeram': 'Skeram',
-                'Battleguard Sartura': 'Sartura', 
-                'Fankriss the Unyielding': 'Fankriss',
-                'Princess Huhuran': 'Huhuran',
-                'Twin Emperors': 'Twins',
-                'Viscidus': 'Visc',
-                'Ouro': 'Ouro',
-                "C'Thun": "C'Thun"
-            };
-            
-            if (bossMap[name]) {
-                return bossMap[name];
-            }
-            
-            // Strip articles and filler words
-            let abbreviated = name.replace(/^(The|the)\s+/, '')
-                                 .replace(/\s+(of|the)\s+/g, ' ')
-                                 .replace(/,/g, '');
-            
-            // If still too long, take first word or truncate
-            const words = abbreviated.split(' ');
-            if (words.length > 1) {
-                abbreviated = words[0];
-            }
-            
-            // Final truncation if needed
-            if (abbreviated.length > 8) {
-                abbreviated = abbreviated.substring(0, 6) + '…';
-            }
-            
-            return abbreviated;
-        }
-
-        // Text fitting utility
-        function measureTextWidth(text, fontSize = 12) {
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            context.font = `${fontSize}px Inter, system-ui, sans-serif`;
-            return context.measureText(text).width;
-        }
-
-        function fitLabel(text, availableWidth, padding = 8) {
-            const innerWidth = availableWidth - (padding * 2);
-            if (innerWidth < 36) return null; // Too narrow
-            
-            const fontSizes = [12, 11, 10];
-            
-            for (const fontSize of fontSizes) {
-                const textWidth = measureTextWidth(text, fontSize);
-                if (textWidth <= innerWidth) {
-                    return { text, fontSize };
-                }
-            }
-            
-            return null; // Doesn't fit
-        }
-
-        function displayTimeline(data) {
-            if (!data.results || data.results.length === 0) return;
-            
-            const validResults = data.results.filter(result => result && !result.error);
-            if (validResults.length === 0) return;
-            
-            elements.timelineContainer.innerHTML = '';
-            
-            // Find max time for scaling
-            let maxTime = 0;
-            validResults.forEach(result => {
-                if (result.total_duration > maxTime) {
-                    maxTime = result.total_duration;
-                }
-            });
-            
-            // Create time scale with ticks - ensure proper alignment
-            const scaleContainer = document.createElement('div');
-            scaleContainer.className = 'relative mb-4';
-            
-            // Time scale labels with proper spacing to match timeline bars
-            const scaleDiv = document.createElement('div');
-            scaleDiv.className = 'flex justify-between text-xs text-muted-foreground mb-1';
-            scaleDiv.style.marginLeft = 'calc(6rem + 1rem)'; // Match the label width + space-x-4 gap
-            scaleDiv.style.marginRight = '0'; // No extra margin needed
-            for (let i = 0; i <= 10; i++) {
-                const time = (maxTime * i) / 10;
-                const span = document.createElement('span');
-                span.textContent = formatTimestamp(time, true);
-                scaleDiv.appendChild(span);
-            }
-            scaleContainer.appendChild(scaleDiv);
-            
-            // Tick marks aligned with timeline bars
-            const ticksDiv = document.createElement('div');
-            ticksDiv.className = 'relative h-2 bg-muted/30 rounded-sm';
-            ticksDiv.style.marginLeft = 'calc(6rem + 1rem)'; // Match the label width + space-x-4 gap
-            ticksDiv.style.marginRight = '0'; // No extra margin needed
-            
-            // Major ticks (every 10%)
-            for (let i = 0; i <= 10; i++) {
-                const tick = document.createElement('div');
-                tick.className = 'absolute w-0.5 h-full bg-muted-foreground/60';
-                tick.style.left = `${(i * 10)}%`;
-                tick.style.transform = 'translateX(-50%)';
-                ticksDiv.appendChild(tick);
-            }
-            
-            // Minor ticks (every 2%)
-            for (let i = 2; i <= 48; i += 2) {
-                if (i % 10 !== 0) { // Skip major tick positions
-                    const tick = document.createElement('div');
-                    tick.className = 'absolute w-0.5 h-1/2 bg-muted-foreground/30 top-1/4';
-                    tick.style.left = `${i}%`;
-                    tick.style.transform = 'translateX(-50%)';
-                    ticksDiv.appendChild(tick);
-                }
-            }
-            
-            scaleContainer.appendChild(ticksDiv);
-            elements.timelineContainer.appendChild(scaleContainer);
-            
-            // Create timeline rows
-            validResults.forEach((result, index) => {
-                const row = document.createElement('div');
-                row.className = 'flex items-center space-x-4 mb-3';
-                
-                const color = runColors[index % runColors.length];
-                
-                const label = document.createElement('div');
-                label.className = 'w-24 text-sm font-medium text-right flex-shrink-0';
-                label.innerHTML = `
-                    <div class="flex items-center justify-end space-x-2">
-                        <span>${result.title || `Run ${index + 1}`}</span>
-                        <div class="w-2 h-2 rounded-full" style="background-color: ${color}"></div>
-                    </div>
-                `;
-                
-                const timelineBar = document.createElement('div');
-                timelineBar.className = 'flex-1 h-8 bg-muted rounded-md relative overflow-hidden';
-                
-                if (result.timeline_data) {
-                    // Get timeline bar width for calculations
-                    setTimeout(() => {
-                        const barWidth = timelineBar.offsetWidth;
-                        
-                        result.timeline_data.forEach(segment => {
-                            const segmentDiv = document.createElement('div');
-                            const isTrash = !segment.is_boss;
-                            
-                            segmentDiv.className = 'timeline-segment absolute h-full flex items-center justify-center text-xs font-medium text-white overflow-hidden';
-                            segmentDiv.style.backgroundColor = isTrash ? '#707887' : '#D42F2F';
-                            segmentDiv.setAttribute('role', 'button');
-                            segmentDiv.setAttribute('tabindex', '0');
-                            
-                            const leftPercent = (segment.start / maxTime) * 100;
-                            const widthPercent = ((segment.end - segment.start) / maxTime) * 100;
-                            const segmentWidth = (widthPercent / 100) * barWidth;
-                            
-                            segmentDiv.style.left = `${leftPercent}%`;
-                            segmentDiv.style.width = `${widthPercent}%`;
-                            
-                            // Determine label text
-                            const baseText = isTrash ? 'Trash' : segment.name;
-                            const displayText = isTrash ? 'Trash' : abbreviateBossName(segment.name);
-                            
-                            // Set tooltip and aria-label
-                            const timeRange = `${formatTimestamp(segment.start)} - ${formatTimestamp(segment.end)}`;
-                            segmentDiv.title = `${baseText} • ${timeRange}`;
-                            segmentDiv.setAttribute('aria-label', `${baseText}, ${timeRange}`);
-                            
-                            // Try to fit label
-                            const fitted = fitLabel(displayText, segmentWidth, 8);
-                            
-                            if (fitted) {
-                                const textSpan = document.createElement('span');
-                                textSpan.className = 'block w-full text-center leading-8 font-medium overflow-hidden text-ellipsis whitespace-nowrap px-2';
-                                textSpan.style.fontSize = `${fitted.fontSize}px`;
-                                textSpan.textContent = fitted.text;
-                                segmentDiv.appendChild(textSpan);
-                            }
-                            
-                            // Add focus styles
-                            segmentDiv.addEventListener('focus', () => {
-                                segmentDiv.style.outline = '2px solid hsl(var(--ring))';
-                                segmentDiv.style.outlineOffset = '2px';
-                            });
-                            
-                            segmentDiv.addEventListener('blur', () => {
-                                segmentDiv.style.outline = 'none';
-                            });
-                            
-                            timelineBar.appendChild(segmentDiv);
-                        });
-                    }, 0);
-                }
-                
-                row.appendChild(label);
-                row.appendChild(timelineBar);
-                elements.timelineContainer.appendChild(row);
-            });
-        }
-
-        function exportToCsv() {
-            if (!currentData || !currentData.results) {
-                showToast('No data to export', 'error');
-                return;
-            }
-            
-            const validResults = currentData.results.filter(result => result && !result.error);
-            if (validResults.length === 0) {
-                showToast('No valid data to export', 'error');
-                return;
-            }
-            
-            // Create CSV content
-            let csvContent = 'Boss';
-            validResults.forEach((result, index) => {
-                csvContent += `,${result.title || `Run ${index + 1}`}`;
-            });
-            if (validResults.length > 1) {
-                csvContent += ',Best Segments';
-            }
-            csvContent += '\n';
-            
-            // Get all unique boss names
-            const allBosses = new Set();
-            validResults.forEach(result => {
-                if (result.fights) {
-                    result.fights.forEach(fight => {
-                        if (fight.is_boss && !fight.name.includes('(Trash)')) {
-                            allBosses.add(fight.name);
-                        }
-                    });
-                }
-            });
-            
-            // Calculate best segments
-            const bestSegments = {};
-            if (validResults.length > 1) {
-                Array.from(allBosses).forEach(bossName => {
-                    let bestSegmentTime = null;
-                    validResults.forEach(result => {
-                        const fight = result.fights?.find(f => f.name === bossName && f.is_boss);
-                        if (fight && fight.individual_segment_time !== undefined && fight.individual_segment_time !== null) {
-                            if (bestSegmentTime === null || fight.individual_segment_time < bestSegmentTime) {
-                                bestSegmentTime = fight.individual_segment_time;
-                            }
-                        }
-                    });
-                    if (bestSegmentTime !== null) {
-                        bestSegments[bossName] = bestSegmentTime;
-                    }
-                });
-            }
-            
-            // Add boss rows
-            let cumulativeBestTime = 0;
-            Array.from(allBosses).forEach(bossName => {
-                csvContent += `"${bossName}"`;
-                
-                validResults.forEach(result => {
-                    const fight = result.fights?.find(f => f.name === bossName && f.is_boss);
-                    if (fight && fight.end_time_rel !== undefined && fight.end_time_rel !== null) {
-                        csvContent += `,${formatTimestamp(fight.end_time_rel, true)}`;
-                    } else {
-                        csvContent += ',—';
-                    }
-                });
-                
-                if (validResults.length > 1) {
-                    if (bestSegments[bossName] !== undefined) {
-                        cumulativeBestTime += bestSegments[bossName];
-                        csvContent += `,${formatTimestamp(cumulativeBestTime, true)}`;
-                    } else {
-                        csvContent += ',—';
-                    }
-                }
-                
-                csvContent += '\n';
-            });
-            
-            // Add total row
-            csvContent += '"Total Run Time"';
-            validResults.forEach(result => {
-                if (result.total_duration !== undefined && result.total_duration !== null) {
-                    csvContent += `,${formatTimestamp(result.total_duration, true)}`;
-                } else {
-                    csvContent += ',—';
-                }
-            });
-            
-            if (validResults.length > 1) {
-                const theoreticalBestTime = Object.values(bestSegments).reduce((sum, time) => sum + time, 0);
-                csvContent += `,${formatTimestamp(theoreticalBestTime, true)}`;
-            }
-            
-            // Download CSV
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `wcl-comparison-${new Date().toISOString().split('T')[0]}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            showToast('CSV exported successfully!', 'success');
-        }
-
-        function shareResults() {
-            if (!currentData) {
-                showToast('No data to share', 'error');
-                return;
-            }
-            
-            const runs = collectRunData();
-            const shareData = {
-                runs: runs,
-                timestamp: new Date().toISOString()
-            };
-            
-            const shareUrl = `${window.location.origin}${window.location.pathname}?data=${encodeURIComponent(btoa(JSON.stringify(shareData)))}`;
-            
-            if (navigator.share) {
-                navigator.share({
-                    title: 'WCL Time Splits Analysis',
-                    text: 'Check out this raid performance comparison',
-                    url: shareUrl
-                }).then(() => {
-                    showToast('Shared successfully!', 'success');
-                }).catch(() => {
-                    copyToClipboard(shareUrl);
-                });
-            } else {
-                copyToClipboard(shareUrl);
-            }
-        }
-
-        function copyToClipboard(text) {
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(text).then(() => {
-                    showToast('Share link copied to clipboard!', 'success');
-                }).catch(() => {
-                    fallbackCopyTextToClipboard(text);
-                });
-            } else {
-                fallbackCopyTextToClipboard(text);
-            }
-        }
-
-        function fallbackCopyTextToClipboard(text) {
-            const textArea = document.createElement('textarea');
-            textArea.value = text;
-            textArea.style.top = '0';
-            textArea.style.left = '0';
-            textArea.style.position = 'fixed';
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            
-            try {
-                document.execCommand('copy');
-                showToast('Share link copied to clipboard!', 'success');
-            } catch (err) {
-                showToast('Failed to copy link', 'error');
-            }
-            
-            document.body.removeChild(textArea);
-        }
-
-        function toggleTheme() {
-            const html = document.documentElement;
-            const isDark = html.classList.contains('dark');
-            
-            if (isDark) {
-                html.classList.remove('dark');
-                html.classList.add('light');
-                localStorage.setItem('theme', 'light');
-            } else {
-                html.classList.remove('light');
-                html.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-            }
-        }
-
-        function initializeTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const theme = savedTheme || (prefersDark ? 'dark' : 'light');
-            
-            document.documentElement.classList.remove('dark', 'light');
-            document.documentElement.classList.add(theme);
-        }
-
-        function showHelpModal() {
-            elements.helpModal.classList.remove('hidden');
-            elements.helpModalClose.focus();
-        }
-
-        function hideHelpModal() {
-            elements.helpModal.classList.add('hidden');
-        }
-
-        function showTimelineFullscreen() {
-            if (!currentData || !currentData.results) {
-                showToast('No timeline data available', 'error');
-                return;
-            }
-
-            const timelineSection = document.getElementById('timeline-section');
-            const timelineCloseBtn = document.getElementById('timeline-close-btn');
-            
-            // Store original parent and position for restoration
-            timelineSection.originalParent = timelineSection.parentNode;
-            timelineSection.originalNextSibling = timelineSection.nextSibling;
-            
-            // FIRST: Move timeline section directly to body to avoid inherited blur
-            document.body.appendChild(timelineSection);
-            
-            // SECOND: Move close button to body as well
-            document.body.appendChild(timelineCloseBtn);
-            
-            // THIRD: Create background overlay
-            const overlay = document.createElement('div');
-            overlay.className = 'timeline-overlay';
-            overlay.id = 'timeline-overlay';
-            document.body.appendChild(overlay);
-            
-            // FOURTH: Now blur everything EXCEPT the timeline section, close button, and overlay
-            const allElements = document.querySelectorAll('body > *');
-            allElements.forEach(element => {
-                // Only blur elements that are NOT the timeline section, close button, or overlay
-                if (element.id !== 'timeline-section' && 
-                    element.id !== 'timeline-close-btn' && 
-                    element.id !== 'timeline-overlay') {
-                    element.classList.add('page-blurred');
-                }
-            });
-            
-            // FIFTH: Expand timeline section to fullscreen
-            timelineSection.classList.add('timeline-expanded');
-            
-            // Show close button
-            timelineCloseBtn.classList.remove('hidden');
-            
-            // Prevent body scrolling
-            document.body.style.overflow = 'hidden';
-            
-            // Animate in
-            requestAnimationFrame(() => {
-                overlay.classList.add('active');
-            });
-            
-            // Generate enhanced fullscreen timeline
-            generateInPlaceFullscreenTimeline();
-            
-            // Focus close button
-            const closeButton = timelineCloseBtn.querySelector('button');
-            closeButton.focus();
-            
-            showToast('Timeline expanded fullscreen', 'info');
-        }
-
-        function hideTimelineFullscreen() {
-            const timelineSection = document.getElementById('timeline-section');
-            const timelineCloseBtn = document.getElementById('timeline-close-btn');
-            const overlay = document.getElementById('timeline-overlay');
-            
-            // Animate out
-            if (overlay) overlay.classList.remove('active');
-            
-            setTimeout(() => {
-                // Remove fullscreen classes
-                timelineSection.classList.remove('timeline-expanded');
-                timelineCloseBtn.classList.add('hidden');
-                
-                // Restore timeline section to its original position
-                if (timelineSection.originalParent) {
-                    if (timelineSection.originalNextSibling) {
-                        timelineSection.originalParent.insertBefore(timelineSection, timelineSection.originalNextSibling);
-                    } else {
-                        timelineSection.originalParent.appendChild(timelineSection);
-                    }
-                    // Clean up stored references
-                    delete timelineSection.originalParent;
-                    delete timelineSection.originalNextSibling;
-                }
-                
-                // Restore close button to its original position (inside timeline section)
-                const timelineContainer = timelineSection.querySelector('#timeline-container');
-                if (timelineContainer) {
-                    timelineSection.appendChild(timelineCloseBtn);
-                }
-                
-                // Remove blur from ALL elements that were blurred
-                const blurredElements = document.querySelectorAll('.page-blurred');
-                blurredElements.forEach(element => {
-                    element.classList.remove('page-blurred');
-                });
-                
-                // Remove overlay
-                if (overlay && overlay.parentNode) {
-                    overlay.parentNode.removeChild(overlay);
-                }
-                
-                // Restore body scrolling
-                document.body.style.overflow = '';
-                
-                // Restore normal timeline
-                displayTimeline(currentData);
-            }, 300);
-        }
-
-        function generateInPlaceFullscreenTimeline() {
-            if (!currentData || !currentData.results) return;
-            
-            const validResults = currentData.results.filter(result => result && !result.error);
-            if (validResults.length === 0) return;
-            
-            elements.timelineContainer.innerHTML = '';
-            
-            // Find max time for scaling
-            let maxTime = 0;
-            validResults.forEach(result => {
-                if (result.total_duration > maxTime) {
-                    maxTime = result.total_duration;
-                }
-            });
-            
-            // Create enhanced fullscreen time scale
-            const scaleContainer = document.createElement('div');
-            scaleContainer.className = 'relative mb-8';
-            
-            // Enhanced time scale with more granular ticks for fullscreen
-            const scaleDiv = document.createElement('div');
-            scaleDiv.className = 'flex justify-between text-sm font-medium text-muted-foreground mb-3';
-            scaleDiv.style.marginLeft = 'calc(8rem + 2rem)'; // Larger labels in fullscreen
-            scaleDiv.style.marginRight = '0';
-            
-            // More time markers for better precision in fullscreen
-            for (let i = 0; i <= 20; i++) {
-                const time = (maxTime * i) / 20;
-                const span = document.createElement('span');
-                span.className = 'text-xs font-mono bg-background/80 px-2 py-1 rounded border';
-                span.textContent = formatTimestamp(time, true);
-                scaleDiv.appendChild(span);
-            }
-            scaleContainer.appendChild(scaleDiv);
-            
-            // Enhanced tick marks with more precision
-            const ticksDiv = document.createElement('div');
-            ticksDiv.className = 'relative h-4 bg-muted/20 rounded-lg border';
-            ticksDiv.style.marginLeft = 'calc(8rem + 2rem)';
-            ticksDiv.style.marginRight = '0';
-            
-            // Major ticks (every 5%)
-            for (let i = 0; i <= 20; i++) {
-                const tick = document.createElement('div');
-                tick.className = 'absolute w-1 h-full bg-muted-foreground/80 rounded-full';
-                tick.style.left = `${(i * 5)}%`;
-                tick.style.transform = 'translateX(-50%)';
-                ticksDiv.appendChild(tick);
-            }
-            
-            // Minor ticks (every 1%)
-            for (let i = 1; i <= 99; i++) {
-                if (i % 5 !== 0) { // Skip major tick positions
-                    const tick = document.createElement('div');
-                    tick.className = 'absolute w-0.5 h-2/3 bg-muted-foreground/40 top-1/6 rounded-full';
-                    tick.style.left = `${i}%`;
-                    tick.style.transform = 'translateX(-50%)';
-                    ticksDiv.appendChild(tick);
-                }
-            }
-            
-            scaleContainer.appendChild(ticksDiv);
-            elements.timelineContainer.appendChild(scaleContainer);
-            
-            // Create enhanced timeline rows with dynamic scaling
-            validResults.forEach((result, index) => {
-                const row = document.createElement('div');
-                row.className = 'flex items-center space-x-8 mb-8'; // Increased spacing for fullscreen
-                
-                const color = runColors[index % runColors.length];
-                
-                // Enhanced label with more space and better typography
-                const label = document.createElement('div');
-                label.className = 'w-32 text-base font-semibold text-right flex-shrink-0'; // Larger label area
-                label.innerHTML = `
-                    <div class="flex items-center justify-end space-x-3 bg-card/50 p-3 rounded-lg border">
-                        <div class="flex flex-col items-end">
-                            <span class="text-sm text-muted-foreground">Run ${index + 1}</span>
-                            <span class="font-bold">${result.title || `Run ${index + 1}`}</span>
-                        </div>
-                        <div class="w-4 h-4 rounded-full border-2 border-background" style="background-color: ${color}"></div>
-                    </div>
-                `;
-                
-                // Enhanced timeline bar with increased height and better visual hierarchy
-                const timelineBar = document.createElement('div');
-                timelineBar.className = 'flex-1 h-16 bg-muted/30 rounded-xl relative overflow-hidden border-2 border-muted/50'; // Much taller bars
-                
-                if (result.timeline_data) {
-                    // Enhanced segments with better spacing and typography
-                    result.timeline_data.forEach(segment => {
-                        const segmentDiv = document.createElement('div');
-                        const isTrash = !segment.is_boss;
-                        
-                        segmentDiv.className = 'timeline-segment absolute h-full flex items-center justify-center text-sm font-bold text-white overflow-hidden transition-all duration-200 hover:z-10 hover:scale-105 hover:shadow-lg cursor-pointer rounded-lg';
-                        segmentDiv.style.backgroundColor = isTrash ? '#64748b' : '#dc2626'; // Enhanced colors
-                        segmentDiv.style.border = '2px solid rgba(255, 255, 255, 0.2)';
-                        segmentDiv.setAttribute('role', 'button');
-                        segmentDiv.setAttribute('tabindex', '0');
-                        
-                        const leftPercent = (segment.start / maxTime) * 100;
-                        const widthPercent = ((segment.end - segment.start) / maxTime) * 100;
-                        
-                        segmentDiv.style.left = `${leftPercent}%`;
-                        segmentDiv.style.width = `${widthPercent}%`;
-                        segmentDiv.style.margin = '4px'; // Add margin for visual separation
-                        segmentDiv.style.height = 'calc(100% - 8px)'; // Account for margin
-                        
-                        // Enhanced label with better contrast and sizing
-                        const baseText = isTrash ? 'Trash' : segment.name;
-                        const displayText = isTrash ? 'Trash' : abbreviateBossName(segment.name);
-                        
-                        // Enhanced tooltip
-                        const duration = segment.end - segment.start;
-                        const timeRange = `${formatTimestamp(segment.start)} - ${formatTimestamp(segment.end)}`;
-                        segmentDiv.title = `${baseText}\nDuration: ${formatTimestamp(duration)}\nTime: ${timeRange}`;
-                        segmentDiv.setAttribute('aria-label', `${baseText}, duration ${formatTimestamp(duration)}, ${timeRange}`);
-                        
-                        // Enhanced text with better sizing logic for fullscreen
-                        const textSpan = document.createElement('span');
-                        textSpan.className = 'block w-full text-center font-bold overflow-hidden text-ellipsis whitespace-nowrap px-3';
-                        
-                        // Dynamic font sizing based on segment width
-                        const segmentWidth = (widthPercent / 100) * (window.innerWidth - 400); // Approximate available width
-                        let fontSize = 14;
-                        if (segmentWidth > 200) fontSize = 16;
-                        else if (segmentWidth > 120) fontSize = 14;
-                        else if (segmentWidth > 80) fontSize = 12;
-                        else if (segmentWidth > 50) fontSize = 10;
-                        else fontSize = 8;
-                        
-                        textSpan.style.fontSize = `${fontSize}px`;
-                        textSpan.style.lineHeight = '1.2';
-                        textSpan.textContent = displayText;
-                        
-                        // Add duration info for larger segments
-                        if (segmentWidth > 100) {
-                            const durationSpan = document.createElement('div');
-                            durationSpan.className = 'text-xs opacity-80 mt-1';
-                            durationSpan.textContent = formatTimestamp(duration, false);
-                            textSpan.appendChild(durationSpan);
-                        }
-                        
-                        segmentDiv.appendChild(textSpan);
-                        
-                        // Enhanced focus and hover effects
-                        segmentDiv.addEventListener('focus', () => {
-                            segmentDiv.style.outline = '3px solid hsl(var(--ring))';
-                            segmentDiv.style.outlineOffset = '2px';
-                            segmentDiv.style.zIndex = '20';
-                        });
-                        
-                        segmentDiv.addEventListener('blur', () => {
-                            segmentDiv.style.outline = 'none';
-                            segmentDiv.style.zIndex = '';
-                        });
-                        
-                        // Enhanced hover effect with info display
-                        segmentDiv.addEventListener('mouseenter', () => {
-                            segmentDiv.style.transform = 'scaleY(1.1)';
-                            segmentDiv.style.zIndex = '10';
-                            segmentDiv.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.4)';
-                        });
-                        
-                        segmentDiv.addEventListener('mouseleave', () => {
-                            segmentDiv.style.transform = '';
-                            segmentDiv.style.zIndex = '';
-                            segmentDiv.style.boxShadow = '';
-                        });
-                        
-                        timelineBar.appendChild(segmentDiv);
-                    });
-                }
-                
-                row.appendChild(label);
-                row.appendChild(timelineBar);
-                elements.timelineContainer.appendChild(row);
-            });
-            
-            // Re-initialize icons
-            lucide.createIcons();
-        }
-
-        function loadSharedData() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const sharedData = urlParams.get('data');
-            
-            if (sharedData) {
-                try {
-                    const decoded = JSON.parse(atob(sharedData));
-                    if (decoded.runs && decoded.runs.length > 0) {
-                        elements.baseRunInput.value = decoded.runs[0] || '';
-                        updateUrlStatus(elements.baseRunInput, elements.baseRunStatus);
-                        
-                        // Add comparison runs
-                        for (let i = 1; i < decoded.runs.length && i < maxRuns; i++) {
-                            addComparisonRun();
-                            const cards = elements.comparisonRuns.querySelectorAll('.run-card');
-                            const lastCard = cards[cards.length - 1];
-                            const urlInput = lastCard.querySelector('.run-url');
-                            urlInput.value = decoded.runs[i];
-                            const statusDiv = lastCard.querySelector('.run-status');
-                            updateUrlStatus(urlInput, statusDiv);
-                        }
-                        
-                        updateAnalyzeButton();
-                        showToast('Shared data loaded!', 'success');
-                        
-                        // Clean up URL
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    }
-                } catch (error) {
-                    console.error('Failed to load shared data:', error);
-                    showToast('Failed to load shared data', 'error');
-                }
-            }
-        }
-
-        // Event listeners
-        elements.baseRunInput.addEventListener('input', () => {
-            updateUrlStatus(elements.baseRunInput, elements.baseRunStatus);
-            updateAnalyzeButton();
+          });
+          csvContent += "\n";
         });
 
-        elements.addRunBtn.addEventListener('click', addComparisonRun);
-        elements.analyzeBtn.addEventListener('click', analyzeReports);
-        elements.themeToggle.addEventListener('click', toggleTheme);
-        elements.helpButton.addEventListener('click', showHelpModal);
-        elements.helpModalClose.addEventListener('click', hideHelpModal);
-        elements.timelineFullscreenBtn.addEventListener('click', showTimelineFullscreen);
-        elements.exportCsvBtn.addEventListener('click', exportToCsv);
-        elements.shareBtn.addEventListener('click', shareResults);
-
-        // Add event listener for the in-place close button and overlay clicks
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('#timeline-close-btn button')) {
-                hideTimelineFullscreen();
-            }
-            
-            // Close fullscreen when clicking on the overlay
-            if (e.target.id === 'timeline-overlay') {
-                hideTimelineFullscreen();
-            }
+        csvContent += '"Total Run Time"';
+        validResults.forEach((result) => {
+          csvContent +=
+            result.total_duration != null
+              ? `,${formatTimestamp(result.total_duration, true)}`
+              : ",—";
         });
 
-        // Modal event listeners
-        elements.helpModal.addEventListener('click', (e) => {
-            if (e.target === elements.helpModal) {
-                hideHelpModal();
-            }
+        const blob = new Blob([csvContent], {
+          type: "text/csv;charset=utf-8;",
         });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute(
+          "download",
+          `wcl-comparison-${new Date().toISOString().split("T")[0]}.csv`
+        );
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            // Check if any modal is open or timeline is expanded
-            const helpModalOpen = !elements.helpModal.classList.contains('hidden');
-            const timelineExpanded = document.getElementById('timeline-section').classList.contains('timeline-expanded');
-            
-            if (!helpModalOpen && !timelineExpanded) {
-                // No modals open - normal shortcuts
-                if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
-                    if (document.activeElement === elements.baseRunInput || 
-                        document.activeElement?.classList.contains('run-url')) {
-                        e.preventDefault();
-                        analyzeReports();
-                    }
-                } else if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
-                    e.preventDefault();
-                    showHelpModal();
-                } else if (e.ctrlKey || e.metaKey) {
-                    switch (e.key.toLowerCase()) {
-                        case 'n':
-                            e.preventDefault();
-                            addComparisonRun();
-                            break;
-                        case 'd':
-                            e.preventDefault();
-                            toggleTheme();
-                            break;
-                        case 'e':
-                            e.preventDefault();
-                            exportToCsv();
-                            break;
-                    }
-                }
-            } else if (helpModalOpen) {
-                // Help modal is open
-                if (e.key === 'Escape') {
-                    e.preventDefault();
-                    hideHelpModal();
-                }
-            } else if (timelineExpanded) {
-                // Timeline is expanded fullscreen
-                if (e.key === 'Escape') {
-                    e.preventDefault();
-                    hideTimelineFullscreen();
-                }
-            }
-        });
+        showToast("CSV exported successfully!", "success");
+      }
 
-        // Filter event listeners
-        elements.bossFilter.addEventListener('change', applyFilters);
-        elements.deltaFilter.addEventListener('change', applyFilters);
-
-        function updateDeltaDisplay() {
-            if (!currentData) return;
-            
-            // Default to showing both total and boss deltas
-            const deltaMode = 'both';
-            const rows = elements.resultsTbody.querySelectorAll('tr');
-            
-            rows.forEach(row => {
-                const deltaChips = row.querySelectorAll('[data-delta-chips]');
-                
-                deltaChips.forEach(chipsContainer => {
-                    const totalChips = chipsContainer.querySelectorAll('[data-delta-type="total"]');
-                    const bossChips = chipsContainer.querySelectorAll('[data-delta-type="boss"]');
-                    
-                    // Show both types of chips
-                    totalChips.forEach(chip => chip.style.display = 'inline-flex');
-                    bossChips.forEach(chip => chip.style.display = 'inline-flex');
-                });
-            });
+      function shareResults() {
+        if (!currentData) {
+          showToast("No data to share", "error");
+          return;
         }
 
-        function setupRowHoverBehavior() {
-            const rows = elements.resultsTbody.querySelectorAll('tr');
-            
-            rows.forEach(row => {
-                // Skip total row
-                const bossCell = row.querySelector('td:first-child');
-                if (!bossCell || bossCell.textContent.trim() === 'Total Run Time') return;
-                
-                // Make row focusable
-                row.setAttribute('tabindex', '0');
-            });
-        }
+        const runs = collectRunData();
+        const shareData = { runs, timestamp: new Date().toISOString() };
+        const shareUrl = `${window.location.origin}${
+          window.location.pathname
+        }?data=${encodeURIComponent(btoa(JSON.stringify(shareData)))}`;
 
-        function applyFilters() {
-            if (!currentData) return;
-            
-            const bossFilter = elements.bossFilter.value;
-            const deltaFilter = parseInt(elements.deltaFilter.value);
-            
-            const rows = elements.resultsTbody.querySelectorAll('tr');
-            
-            rows.forEach(row => {
-                const bossCell = row.querySelector('td:first-child');
-                if (!bossCell) return;
-                
-                const bossName = bossCell.textContent.trim();
-                const isTrash = bossName.includes('(Trash)');
-                const isTotalRow = bossName === 'Total Run Time';
-                
-                let shouldShow = true;
-                
-                // Boss filter
-                if (bossFilter !== 'all' && bossName !== bossFilter && !isTotalRow) {
-                    shouldShow = false;
-                }
-                
-                // Delta filter - check any significant delta
-                if (deltaFilter > 0 && !isTotalRow) {
-                    const deltaElements = row.querySelectorAll('.delta-pill');
-                    let hasSignificantDelta = false;
-                    
-                    deltaElements.forEach(deltaEl => {
-                        const deltaText = deltaEl.textContent.trim();
-                        if (deltaText.startsWith('+') || deltaText.startsWith('-')) {
-                            const timeMatch = deltaText.match(/(\d+):(\d+)/);
-                            if (timeMatch) {
-                                const minutes = parseInt(timeMatch[1]);
-                                const seconds = parseInt(timeMatch[2]);
-                                const totalMs = (minutes * 60 + seconds) * 1000;
-                                if (totalMs >= deltaFilter) {
-                                    hasSignificantDelta = true;
-                                }
-                            }
-                        }
-                    });
-                    
-                    if (!hasSignificantDelta) {
-                        shouldShow = false;
-                    }
-                }
-                
-                row.style.display = shouldShow ? '' : 'none';
-            });
-        }
-
-        // Initialize drag and drop for run cards
-        function initializeSortable() {
-            if (typeof Sortable !== 'undefined') {
-                new Sortable(elements.comparisonRuns, {
-                    handle: '.drag-handle',
-                    animation: 150,
-                    ghostClass: 'opacity-50',
-                    onEnd: function(evt) {
-                        // Update run indices and colors
-                        const cards = elements.comparisonRuns.querySelectorAll('.run-card');
-                        cards.forEach((card, index) => {
-                            card.setAttribute('data-run-index', index);
-                            const colorDot = card.querySelector('.w-3.h-3.rounded-full');
-                            if (colorDot) {
-                                colorDot.style.backgroundColor = runColors[index % runColors.length];
-                            }
-                        });
-                        
-                        showToast('Runs reordered', 'info');
-                    }
-                });
-            }
-        }
-
-        // Initialize the application
-        function init() {
-            initializeTheme();
-            loadSharedData();
-            initializeSortable();
-            updateAnalyzeButton();
-            lucide.createIcons();
-        }
-
-        // Start the application when DOM is loaded
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
+        if (navigator.share) {
+          navigator
+            .share({
+              title: "WCL Time Splits Analysis",
+              text: "Check out this raid performance comparison",
+              url: shareUrl,
+            })
+            .then(() => showToast("Shared successfully!", "success"))
+            .catch(() => copyToClipboard(shareUrl));
         } else {
-            init();
+          copyToClipboard(shareUrl);
         }
+      }
+
+      function copyToClipboard(text) {
+        if (navigator.clipboard) {
+          navigator.clipboard
+            .writeText(text)
+            .then(() => showToast("Share link copied to clipboard!", "success"))
+            .catch(() => fallbackCopyTextToClipboard(text));
+        } else {
+          fallbackCopyTextToClipboard(text);
+        }
+      }
+
+      function fallbackCopyTextToClipboard(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.position = "fixed";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+          document.execCommand("copy");
+          showToast("Share link copied to clipboard!", "success");
+        } catch {
+          showToast("Failed to copy link", "error");
+        }
+        document.body.removeChild(textArea);
+      }
+
+      function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.classList.contains("dark");
+        if (isDark) {
+          html.classList.remove("dark");
+          html.classList.add("light");
+          localStorage.setItem("theme", "light");
+        } else {
+          html.classList.remove("light");
+          html.classList.add("dark");
+          localStorage.setItem("theme", "dark");
+        }
+      }
+
+      function initializeTheme() {
+        const savedTheme = localStorage.getItem("theme");
+        const prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
+        const theme = savedTheme || (prefersDark ? "dark" : "light");
+        document.documentElement.classList.remove("dark", "light");
+        document.documentElement.classList.add(theme);
+      }
+
+      function showHelpModal() {
+        elements.helpModal.classList.remove("hidden");
+        elements.helpModalClose.focus();
+      }
+      function hideHelpModal() {
+        elements.helpModal.classList.add("hidden");
+      }
+
+      function showTimelineFullscreen() {
+        if (!currentData || !currentData.results) {
+          showToast("No timeline data available", "error");
+          return;
+        }
+        const timelineSection = document.getElementById("timeline-section");
+        const timelineCloseBtn = document.getElementById("timeline-close-btn");
+        timelineSection.originalParent = timelineSection.parentNode;
+        timelineSection.originalNextSibling = timelineSection.nextSibling;
+        document.body.appendChild(timelineSection);
+        document.body.appendChild(timelineCloseBtn);
+
+        const overlay = document.createElement("div");
+        overlay.className = "timeline-overlay";
+        overlay.id = "timeline-overlay";
+        document.body.appendChild(overlay);
+
+        const allElements = document.querySelectorAll("body > *");
+        allElements.forEach((el) => {
+          if (
+            el.id !== "timeline-section" &&
+            el.id !== "timeline-close-btn" &&
+            el.id !== "timeline-overlay"
+          ) {
+            el.classList.add("page-blurred");
+          }
+        });
+
+        timelineSection.classList.add("timeline-expanded");
+        timelineCloseBtn.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+
+        requestAnimationFrame(() => overlay.classList.add("active"));
+        generateInPlaceFullscreenTimeline();
+
+        const closeButton = timelineCloseBtn.querySelector("button");
+        closeButton.focus();
+        showToast("Timeline expanded fullscreen", "info");
+      }
+
+      function hideTimelineFullscreen() {
+        const timelineSection = document.getElementById("timeline-section");
+        const timelineCloseBtn = document.getElementById("timeline-close-btn");
+        const overlay = document.getElementById("timeline-overlay");
+        if (overlay) overlay.classList.remove("active");
+
+        setTimeout(() => {
+          timelineSection.classList.remove("timeline-expanded");
+          timelineCloseBtn.classList.add("hidden");
+
+          if (timelineSection.originalParent) {
+            if (timelineSection.originalNextSibling) {
+              timelineSection.originalParent.insertBefore(
+                timelineSection,
+                timelineSection.originalNextSibling
+              );
+            } else {
+              timelineSection.originalParent.appendChild(timelineSection);
+            }
+            delete timelineSection.originalParent;
+            delete timelineSection.originalNextSibling;
+          }
+
+          const timelineContainer = timelineSection.querySelector(
+            "#timeline-container"
+          );
+          if (timelineContainer) {
+            timelineSection.appendChild(timelineCloseBtn);
+          }
+
+          const blurred = document.querySelectorAll(".page-blurred");
+          blurred.forEach((el) => el.classList.remove("page-blurred"));
+          if (overlay && overlay.parentNode)
+            overlay.parentNode.removeChild(overlay);
+          document.body.style.overflow = "";
+          displayTimeline(currentData);
+        }, 300);
+      }
+
+      function generateInPlaceFullscreenTimeline() {
+        if (!currentData?.results) return;
+        const validResults = currentData.results.filter((r) => r && !r.error);
+        if (!validResults.length) return;
+
+        elements.timelineContainer.innerHTML = "";
+        const maxTime = Math.max(...validResults.map((r) => r.total_duration));
+
+        // Create enhanced timeline for fullscreen
+        const scaleContainer = document.createElement("div");
+        scaleContainer.className = "relative mb-8";
+
+        const scaleDiv = document.createElement("div");
+        scaleDiv.className =
+          "flex justify-between text-sm font-medium text-muted-foreground mb-3";
+        scaleDiv.style.marginLeft = "calc(8rem + 2rem)";
+
+        for (let i = 0; i <= 20; i++) {
+          const span = document.createElement("span");
+          span.className =
+            "text-xs font-mono bg-background/80 px-2 py-1 rounded border";
+          span.textContent = formatTimestamp((maxTime * i) / 20, true);
+          scaleDiv.appendChild(span);
+        }
+        scaleContainer.appendChild(scaleDiv);
+
+        const ticksDiv = document.createElement("div");
+        ticksDiv.className = "relative h-4 bg-muted/20 rounded-lg border";
+        ticksDiv.style.marginLeft = "calc(8rem + 2rem)";
+
+        for (let i = 0; i <= 20; i++) {
+          const tick = document.createElement("div");
+          tick.className =
+            "absolute w-1 h-full bg-muted-foreground/80 rounded-full";
+          tick.style.left = `${i * 5}%`;
+          tick.style.transform = "translateX(-50%)";
+          ticksDiv.appendChild(tick);
+        }
+        scaleContainer.appendChild(ticksDiv);
+        elements.timelineContainer.appendChild(scaleContainer);
+
+        validResults.forEach((result, index) => {
+          const row = document.createElement("div");
+          row.className = "flex items-center space-x-8 mb-8";
+          const color = runColors[index % runColors.length];
+
+          const label = document.createElement("div");
+          label.className =
+            "w-32 text-base font-semibold text-right flex-shrink-0";
+          label.innerHTML = `<div class="flex items-center justify-end space-x-3 bg-card/50 p-3 rounded-lg border">
+            <div class="flex flex-col items-end">
+              <span class="text-sm text-muted-foreground">Run ${
+                index + 1
+              }</span>
+              <span class="font-bold">${
+                result.title || `Run ${index + 1}`
+              }</span>
+            </div>
+            <div class="w-4 h-4 rounded-full border-2 border-background" style="background-color: ${color}"></div>
+          </div>`;
+
+          const timelineBar = document.createElement("div");
+          timelineBar.className =
+            "flex-1 h-16 bg-muted/30 rounded-xl relative overflow-hidden border-2 border-muted/50";
+
+          result.timeline_data?.forEach((segment) => {
+            const segmentDiv = document.createElement("div");
+            const isTrash = !segment.is_boss;
+            segmentDiv.className =
+              "timeline-segment absolute h-full flex items-center justify-center text-sm font-bold text-white overflow-hidden transition-all duration-200 hover:z-10 hover:scale-105 hover:shadow-lg cursor-pointer rounded-lg";
+            segmentDiv.style.backgroundColor = isTrash ? "#64748b" : "#dc2626";
+            segmentDiv.style.border = "2px solid rgba(255, 255, 255, 0.2)";
+            segmentDiv.style.left = `${(segment.start / maxTime) * 100}%`;
+            segmentDiv.style.width = `${
+              ((segment.end - segment.start) / maxTime) * 100
+            }%`;
+            segmentDiv.style.margin = "4px";
+            segmentDiv.style.height = "calc(100% - 8px)";
+
+            const baseText = isTrash ? "Trash" : segment.name;
+            const duration = segment.end - segment.start;
+            segmentDiv.title = `${baseText}\nDuration: ${formatTimestamp(
+              duration
+            )}\nTime: ${formatTimestamp(segment.start)} - ${formatTimestamp(
+              segment.end
+            )}`;
+
+            const textSpan = document.createElement("span");
+            textSpan.className =
+              "block w-full text-center font-bold overflow-hidden text-ellipsis whitespace-nowrap px-3";
+            textSpan.textContent = isTrash
+              ? "Trash"
+              : abbreviateBossName(segment.name);
+            segmentDiv.appendChild(textSpan);
+
+            timelineBar.appendChild(segmentDiv);
+          });
+
+          row.appendChild(label);
+          row.appendChild(timelineBar);
+          elements.timelineContainer.appendChild(row);
+        });
+        lucide.createIcons();
+      }
+
+      function loadSharedData() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sharedData = urlParams.get("data");
+
+        if (sharedData) {
+          try {
+            const decoded = JSON.parse(atob(sharedData));
+            if (decoded.runs && decoded.runs.length > 0) {
+              elements.baseRunInput.value = decoded.runs[0] || "";
+              updateUrlStatus(elements.baseRunInput, elements.baseRunStatus);
+
+              for (let i = 1; i < decoded.runs.length && i < maxRuns; i++) {
+                addComparisonRun();
+                const cards =
+                  elements.comparisonRuns.querySelectorAll(".run-card");
+                const lastCard = cards[cards.length - 1];
+                const urlInput = lastCard.querySelector(".run-url");
+                urlInput.value = decoded.runs[i];
+                const statusDiv = lastCard.querySelector(".run-status");
+                updateUrlStatus(urlInput, statusDiv);
+              }
+
+              updateAnalyzeButton();
+              showToast("Shared data loaded!", "success");
+
+              window.history.replaceState(
+                {},
+                document.title,
+                window.location.pathname
+              );
+            }
+          } catch (error) {
+            console.error("Failed to load shared data:", error);
+            showToast("Failed to load shared data", "error");
+          }
+        }
+      }
+
+      // Event listeners
+      elements.baseRunInput.addEventListener("input", () => {
+        updateUrlStatus(elements.baseRunInput, elements.baseRunStatus);
+        updateAnalyzeButton();
+      });
+
+      elements.addRunBtn.addEventListener("click", addComparisonRun);
+      elements.analyzeBtn.addEventListener("click", analyzeReports);
+      elements.themeToggle.addEventListener("click", toggleTheme);
+      elements.helpButton.addEventListener("click", showHelpModal);
+      elements.helpModalClose.addEventListener("click", hideHelpModal);
+      elements.timelineFullscreenBtn.addEventListener(
+        "click",
+        showTimelineFullscreen
+      );
+      elements.exportCsvBtn.addEventListener("click", exportToCsv);
+      elements.shareBtn.addEventListener("click", shareResults);
+
+      document.addEventListener("click", (e) => {
+        if (e.target.closest("#timeline-close-btn button")) {
+          hideTimelineFullscreen();
+        }
+        if (e.target.id === "timeline-overlay") {
+          hideTimelineFullscreen();
+        }
+      });
+
+      elements.helpModal.addEventListener("click", (e) => {
+        if (e.target === elements.helpModal) hideHelpModal();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        const helpModalOpen = !elements.helpModal.classList.contains("hidden");
+        const timelineExpanded = document
+          .getElementById("timeline-section")
+          .classList.contains("timeline-expanded");
+
+        if (!helpModalOpen && !timelineExpanded) {
+          if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
+            if (
+              document.activeElement === elements.baseRunInput ||
+              document.activeElement?.classList.contains("run-url")
+            ) {
+              e.preventDefault();
+              analyzeReports();
+            }
+          } else if (e.key === "?" && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            showHelpModal();
+          } else if (e.ctrlKey || e.metaKey) {
+            switch (e.key.toLowerCase()) {
+              case "n":
+                e.preventDefault();
+                addComparisonRun();
+                break;
+              case "d":
+                e.preventDefault();
+                toggleTheme();
+                break;
+              case "e":
+                e.preventDefault();
+                exportToCsv();
+                break;
+            }
+          }
+        } else if (helpModalOpen && e.key === "Escape") {
+          e.preventDefault();
+          hideHelpModal();
+        } else if (timelineExpanded && e.key === "Escape") {
+          e.preventDefault();
+          hideTimelineFullscreen();
+        }
+      });
+
+      elements.bossFilter.addEventListener("change", applyFilters);
+      elements.deltaFilter.addEventListener("change", applyFilters);
+
+      function updateDeltaDisplay() {
+        if (!currentData) return;
+        const rows = elements.resultsTbody.querySelectorAll("tr");
+        rows.forEach((row) => {
+          const deltaChips = row.querySelectorAll("[data-delta-chips]");
+          deltaChips.forEach((chipsContainer) => {
+            const totalChips = chipsContainer.querySelectorAll(
+              '[data-delta-type="total"]'
+            );
+            const bossChips = chipsContainer.querySelectorAll(
+              '[data-delta-type="boss"]'
+            );
+            totalChips.forEach((chip) => (chip.style.display = "inline-flex"));
+            bossChips.forEach((chip) => (chip.style.display = "inline-flex"));
+          });
+        });
+      }
+
+      function setupRowHoverBehavior() {
+        const rows = elements.resultsTbody.querySelectorAll("tr");
+        rows.forEach((row) => {
+          const bossCell = row.querySelector("td:first-child");
+          if (!bossCell || bossCell.textContent.trim() === "Total Run Time")
+            return;
+          row.setAttribute("tabindex", "0");
+        });
+      }
+
+      function applyFilters() {
+        if (!currentData) return;
+
+        const bossFilter = elements.bossFilter.value;
+        const deltaFilter = parseInt(elements.deltaFilter.value);
+
+        const rows = elements.resultsTbody.querySelectorAll("tr");
+        rows.forEach((row) => {
+          const bossCell = row.querySelector("td:first-child");
+          if (!bossCell) return;
+
+          const bossName = bossCell.textContent.trim();
+          const isTotalRow = bossName === "Total Run Time";
+
+          let shouldShow = true;
+
+          if (bossFilter !== "all" && bossName !== bossFilter && !isTotalRow) {
+            shouldShow = false;
+          }
+
+          if (deltaFilter > 0 && !isTotalRow) {
+            const deltaElements = row.querySelectorAll(".delta-pill");
+            let hasSignificantDelta = false;
+
+            deltaElements.forEach((deltaEl) => {
+              const deltaText = deltaEl.textContent.trim();
+              if (deltaText.startsWith("+") || deltaText.startsWith("-")) {
+                const timeMatch = deltaText.match(/(\d+):(\d+)/);
+                if (timeMatch) {
+                  const minutes = parseInt(timeMatch[1]);
+                  const seconds = parseInt(timeMatch[2]);
+                  const totalMs = (minutes * 60 + seconds) * 1000;
+                  if (totalMs >= deltaFilter) {
+                    hasSignificantDelta = true;
+                  }
+                }
+              }
+            });
+
+            if (!hasSignificantDelta) shouldShow = false;
+          }
+
+          row.style.display = shouldShow ? "" : "none";
+        });
+      }
+
+      function initializeSortable() {
+        if (typeof Sortable !== "undefined") {
+          new Sortable(elements.comparisonRuns, {
+            handle: ".drag-handle",
+            animation: 150,
+            ghostClass: "opacity-50",
+            onEnd: function () {
+              const cards =
+                elements.comparisonRuns.querySelectorAll(".run-card");
+              cards.forEach((card, index) => {
+                card.setAttribute("data-run-index", index);
+                const colorDot = card.querySelector(".w-3.h-3.rounded-full");
+                if (colorDot) {
+                  colorDot.style.backgroundColor =
+                    runColors[index % runColors.length];
+                }
+              });
+              showToast("Runs reordered", "info");
+            },
+          });
+        }
+      }
+
+      function init() {
+        initializeTheme();
+        loadSharedData();
+        initializeSortable();
+        updateAnalyzeButton();
+        lucide.createIcons();
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
     </script>
-</body>
+  </body>
 </html>
