@@ -32,10 +32,9 @@ if app.config.get('FLASK_ENV') == 'production':
 
 def format_timestamp(ms, include_hours=True):
     """
-    Format timestamp using exact Google Apps Script logic.
+    Format timestamp using CLA Google Apps Script logic.
     
-    This matches the original getStringForTimeStamp function exactly,
-    using Math.floor() for all calculations to ensure consistent results.
+    This matches the original getStringForTimeStamp function using Math.floor().
     """
     if not isinstance(ms, (int, float)):
         return "---"
@@ -43,17 +42,8 @@ def format_timestamp(ms, include_hours=True):
     # Handle negative durations for delta calculations
     sign = "-" if ms < 0 else ""
     
-    # Convert to seconds using the exact original logic
+    # Convert to seconds using original logic
     delta = abs(ms) / 1000
-    
-    # Original Google Apps Script logic:
-    # var days = Math.floor(delta / 86400);
-    # delta -= days * 86400;
-    # var hours = Math.floor(delta / 3600) % 24;
-    # delta -= hours * 3600;
-    # var minutes = Math.floor(delta / 60) % 60;
-    # delta -= minutes * 60;
-    # var seconds = Math.floor(delta % 60);
     
     days = math.floor(delta / 86400)
     delta -= days * 86400
@@ -80,18 +70,14 @@ def get_wcl_data(report_url_or_id, api_key):
     
     report_input = report_url_or_id.strip()
     
-    # Determine the correct endpoint and extract report ID using Google Apps Script logic
+    # Determine the correct endpoint and extract report ID
     log_id = ""
     base_url = "https://vanilla.warcraftlogs.com:443/v1/"  # Default fallback
     
-    # Replace .cn/ with .com/ (matching Google Apps Script)
+    # Replace .cn/ with .com/
     report_input = report_input.replace(".cn/", ".com/")
     
-    # Check for TBC reports (not supported)
-    if "tbc.warcraftlogs" in report_input:
-        return {"error": "TBC reports are not supported. Please use the TBC version of the analyzer."}
-    
-    # Extract report ID and determine correct endpoint (matching Google Apps Script logic)
+    # Extract report ID and determine correct endpoint
     if "classic.warcraftlogs.com/reports/" in report_input:
         log_id = report_input.split("classic.warcraftlogs.com/reports/")[1].split("#")[0].split("?")[0]
         base_url = "https://classic.warcraftlogs.com:443/v1/"
@@ -248,7 +234,7 @@ def find_raid_zone_times(report_data):
 
 
 def process_fights(report_data):
-    """Process raw WCL fight data using exact Google Apps Script logic."""
+    """Process raw WCL fight data."""
     if not report_data or report_data.get("error"):
         return report_data
 
@@ -256,7 +242,7 @@ def process_fights(report_data):
     if error:
         return {"error": error}
 
-    # Use the exact zone start time as zoneStart (matching Google Apps Script)
+    # Use the exact zone start time as zoneStart
     zone_start = raid_start_time
     zone_end = raid_end_time
     
@@ -269,20 +255,15 @@ def process_fights(report_data):
         "timeline_data": []
     }
 
-    # Filter valid fights using Google Apps Script logic
+    # Filter valid fights
     valid_fights = []
     for fight in report_data["fights"]:
-        # Match the Google Apps Script condition:
-        # ((fight.start_time <= zoneStart && fight.end_time >= zoneStart) || 
-        #  (fight.start_time <= zoneEnd && fight.end_time >= zoneEnd) || 
-        #  (fight.start_time >= zoneStart && fight.end_time <= zoneEnd)) && 
-        # (fight.end_time - fight.start_time > 4000)
         if (((fight["start_time"] <= zone_start and fight["end_time"] >= zone_start) or
              (fight["start_time"] <= zone_end and fight["end_time"] >= zone_end) or
              (fight["start_time"] >= zone_start and fight["end_time"] <= zone_end)) and
             (fight.get("end_time", 0) - fight.get("start_time", 0) > 4000)):
             
-            # Verify enemy encounters (matching Google Apps Script logic)
+            # Verify enemy encounters
             has_valid_enemies = False
             if "enemies" in report_data:
                 for enemy in report_data["enemies"]:
@@ -295,7 +276,7 @@ def process_fights(report_data):
                             break
             
             if has_valid_enemies:
-                # Adjust fight end time if it exceeds zone end (matching Google Apps Script)
+                # Adjust fight end time if it exceeds zone end
                 if fight["end_time"] > zone_end:
                     fight["end_time"] = zone_end
                 valid_fights.append(fight)
@@ -303,31 +284,26 @@ def process_fights(report_data):
     if not valid_fights:
         return {"error": f"Found '{zone_name}', but no processable fights were found."}
 
-    # Process fights using exact Google Apps Script timing logic
+    # Process fights
     is_naxx = zone_name == "Naxxramas"
     wing_clear_times = {"Abomination": 0, "Plague": 0, "Spider": 0, "Military": 0}
-    previous_fight_end = -1  # Matches Google Apps Script variable name
+    previous_fight_end = -1
     previous_boss_end = 0  # Track previous boss end time for individual segment calculation
 
     for fight in sorted(valid_fights, key=lambda f: f["start_time"]):
         is_boss = fight.get("boss", 0) > 0 and fight.get("name") != "Trash"
         
-        # Calculate times using exact Google Apps Script formulas:
-        # start_time_rel = fight.start_time - zoneStart
-        # end_time_rel = fight.end_time - zoneStart  
-        # duration = fight.end_time - fight.start_time
         start_time_rel = fight["start_time"] - zone_start
         end_time_rel = fight["end_time"] - zone_start
         duration = fight["end_time"] - fight["start_time"]
         
         # Calculate individual segment time for bosses (time from previous boss end to this boss end)
-        # This matches the reference app's "Eternal" column behavior
         individual_segment_time = None
         if is_boss:
             individual_segment_time = end_time_rel - previous_boss_end
             previous_boss_end = end_time_rel
         
-        # Calculate idle time using Google Apps Script logic:
+        # Calculate idle time
         # if (previousFightEnd == -1) "---" else fight.start_time - previousFightEnd - zoneStart
         if previous_fight_end == -1:
             idle_time = None  # Will display as "---"
@@ -336,7 +312,7 @@ def process_fights(report_data):
         
         wing_time = None
 
-        # Naxxramas wing time calculation (matching Google Apps Script)
+        # Naxxramas wing time calculation
         if is_naxx and is_boss and fight.get("kill"):
             boss_id = fight.get("boss")
             for wing, wing_boss_ids in app.config['NAXX_CONFIG']["wing_bosses"].items():
@@ -367,7 +343,7 @@ def process_fights(report_data):
             "is_kill": fight.get("kill", False)
         })
         
-        # Update previousFightEnd using Google Apps Script logic:
+        # Update previousFightEnd:
         # previousFightEnd = fight.end_time - zoneStart
         previous_fight_end = fight["end_time"]
 
@@ -397,6 +373,10 @@ def calculate_deltas(data1, data2):
                 # Individual segment delta: difference in individual segment times
                 if fight.get("individual_segment_time") and data2_fight.get("individual_segment_time"):
                     fight["segment_delta"] = fight["individual_segment_time"] - data2_fight["individual_segment_time"]
+                # Boss fight duration delta: difference in boss fight durations
+                fight_duration = fight["end_time_rel"] - fight["start_time_rel"]
+                base_fight_duration = data2_fight["end_time_rel"] - data2_fight["start_time_rel"]
+                fight["boss_fight_delta"] = fight_duration - base_fight_duration
     
     # Calculate total time delta
     if data1.get("total_duration") and data2.get("total_duration"):

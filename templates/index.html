@@ -270,6 +270,59 @@
             white-space: nowrap;
             border: 0;
         }
+
+        /* Timeline expansion styles */
+        .timeline-expanded {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            width: 95vw !important;
+            height: 90vh !important;
+            z-index: 50 !important;
+            background: hsl(var(--background)) !important;
+            padding: 2rem !important;
+            overflow-y: auto !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            border-radius: 0.75rem !important;
+            border: 2px solid hsl(var(--border)) !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+            filter: none !important; /* Ensure timeline itself is never blurred */
+        }
+
+        .timeline-expanded .timeline-content {
+            max-width: none !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .timeline-expanded * {
+            filter: none !important; /* Ensure all timeline children are never blurred */
+        }
+
+        .page-blurred {
+            filter: blur(4px) !important;
+            opacity: 0.3 !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            pointer-events: none !important;
+        }
+
+        .timeline-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 49;
+            opacity: 0;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .timeline-overlay.active {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-background font-sans antialiased">
@@ -465,10 +518,30 @@
             </div>
 
             <!-- Timeline Visualization -->
-            <div class="space-y-4">
-                <h3 class="text-lg font-medium">Timeline Visualization</h3>
+            <div id="timeline-section" class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium">Timeline Visualization</h3>
+                    <button
+                        id="timeline-fullscreen-btn"
+                        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                        title="Expand timeline fullscreen"
+                        aria-label="Expand timeline fullscreen"
+                    >
+                        <i data-lucide="maximize-2" class="h-4 w-4"></i>
+                    </button>
+                </div>
                 <div id="timeline-container" class="space-y-3">
                     <!-- Timeline will be populated here -->
+                </div>
+                
+                <!-- Fullscreen close button (hidden by default) -->
+                <div id="timeline-close-btn" class="hidden fixed top-4 right-4 z-50">
+                    <button
+                        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 w-10"
+                        aria-label="Close fullscreen timeline"
+                    >
+                        <i data-lucide="x" class="h-4 w-4"></i>
+                    </button>
                 </div>
             </div>
         </section>
@@ -523,6 +596,7 @@
         </div>
     </div>
 
+
     <!-- Toast Container -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2" aria-live="polite"></div>
 
@@ -566,9 +640,9 @@
             resultsTable: document.getElementById('results-table'),
             resultsTbody: document.getElementById('results-tbody'),
             timelineContainer: document.getElementById('timeline-container'),
+            timelineFullscreenBtn: document.getElementById('timeline-fullscreen-btn'),
             bossFilter: document.getElementById('boss-filter'),
             deltaFilter: document.getElementById('delta-filter'),
-            showTrash: document.getElementById('show-trash'),
             exportCsvBtn: document.getElementById('export-csv-btn'),
             shareBtn: document.getElementById('share-btn'),
             toastContainer: document.getElementById('toast-container')
@@ -765,6 +839,10 @@
                 elements.addRunBtn.innerHTML = '<i data-lucide="plus" class="mr-2 h-4 w-4"></i>Add Run';
             }
             lucide.createIcons();
+            
+            // Set up hover behavior and initial delta display after table is populated
+            setupRowHoverBehavior();
+            updateDeltaDisplay();
         }
 
         function addComparisonRun() {
@@ -1014,17 +1092,63 @@
                         
                         let content = `<div class="font-semibold">${timeStr}</div>`;
                         
-                        // Add delta for comparison runs
+                        // Add delta chips for comparison runs
                         if (index > 0 && baseEndTime !== null) {
-                            const rawDelta = fight.end_time_rel - baseEndTime;
-                            const delta = Math.round(rawDelta / 1000) * 1000;
-                            const deltaStr = formatDelta(delta);
-                            const deltaClass = getDeltaClass(delta);
+                            const baseFightForBoss = validResults[0].fights?.find(f => f.name === bossName && f.is_boss);
                             
-                            content += `<div class="delta-pill ${deltaClass} mt-1">
-                                <i data-lucide="${delta < 0 ? 'trending-down' : delta > 0 ? 'trending-up' : 'minus'}" class="h-3 w-3"></i>
-                                ${deltaStr}
+                            // Calculate Total Δ (cumulative delta)
+                            const rawTotalDelta = fight.end_time_rel - baseEndTime;
+                            const totalDelta = Math.round(rawTotalDelta / 1000) * 1000;
+                            const totalDeltaStr = formatDelta(totalDelta);
+                            const totalDeltaClass = getDeltaClass(totalDelta);
+                            
+                            // Calculate Boss Fight Δ (fight duration delta)
+                            let bossFightDelta = null;
+                            let bossFightDeltaStr = '';
+                            let bossFightDeltaClass = 'delta-neutral';
+                            
+                            if (fight.boss_fight_delta !== undefined && fight.boss_fight_delta !== null) {
+                                bossFightDelta = Math.round(fight.boss_fight_delta / 1000) * 1000;
+                                bossFightDeltaStr = formatDelta(bossFightDelta);
+                                bossFightDeltaClass = getDeltaClass(bossFightDelta);
+                            } else if (baseFightForBoss) {
+                                // Fallback calculation if backend didn't provide it
+                                const currentFightDuration = fight.end_time_rel - fight.start_time_rel;
+                                const baseFightDuration = baseFightForBoss.end_time_rel - baseFightForBoss.start_time_rel;
+                                bossFightDelta = Math.round((currentFightDuration - baseFightDuration) / 1000) * 1000;
+                                bossFightDeltaStr = formatDelta(bossFightDelta);
+                                bossFightDeltaClass = getDeltaClass(bossFightDelta);
+                            }
+                            
+                            // Create chips container
+                            content += '<div class="flex flex-wrap gap-1 justify-center mt-1" data-delta-chips>';
+                            
+                            // Total Δ chip (always present for comparison runs)
+                            content += `<div class="delta-pill ${totalDeltaClass}" data-delta-type="total" title="Δ Total vs ${validResults[0].title || 'Base Run'}: ${totalDeltaStr}">
+                                <i data-lucide="${totalDelta < 0 ? 'trending-down' : totalDelta > 0 ? 'trending-up' : 'minus'}" class="h-3 w-3"></i>
+                                ${totalDeltaStr}
                             </div>`;
+                            
+                            // Boss Fight Δ chip (always visible now)
+                            if (bossFightDelta !== null) {
+                                const currentFightDuration = fight.end_time_rel - fight.start_time_rel;
+                                const baseFightDuration = baseFightForBoss ? baseFightForBoss.end_time_rel - baseFightForBoss.start_time_rel : null;
+                                const tooltipText = baseFightDuration !== null ? 
+                                    `Δ Boss vs ${validResults[0].title || 'Base Run'}: ${bossFightDeltaStr} (This run fight: ${formatTimestamp(currentFightDuration, true)}; Base: ${formatTimestamp(baseFightDuration, true)})` :
+                                    `Δ Boss vs ${validResults[0].title || 'Base Run'}: ${bossFightDeltaStr}`;
+                                
+                                content += `<div class="delta-pill ${bossFightDeltaClass}" data-delta-type="boss" title="${tooltipText}" aria-label="Boss fight delta versus ${validResults[0].title || 'Base Run'}: ${Math.abs(bossFightDelta / 1000)} seconds ${bossFightDelta < 0 ? 'faster' : bossFightDelta > 0 ? 'slower' : 'equal'}">
+                                    <i data-lucide="${bossFightDelta < 0 ? 'trending-down' : bossFightDelta > 0 ? 'trending-up' : 'minus'}" class="h-3 w-3"></i>
+                                    <span class="font-mono">B: ${bossFightDeltaStr}</span>
+                                </div>`;
+                            } else {
+                                // Show neutral chip when no data available
+                                content += `<div class="delta-pill delta-neutral" data-delta-type="boss" title="Boss fight data not available">
+                                    <span class="font-mono">B: —</span>
+                                </div>`;
+                            }
+                            
+                            content += '</div>';
                         }
                         
                         cell.innerHTML = content;
@@ -1551,6 +1675,300 @@
             elements.helpModal.classList.add('hidden');
         }
 
+        function showTimelineFullscreen() {
+            if (!currentData || !currentData.results) {
+                showToast('No timeline data available', 'error');
+                return;
+            }
+
+            const timelineSection = document.getElementById('timeline-section');
+            const timelineCloseBtn = document.getElementById('timeline-close-btn');
+            
+            // Store original parent and position for restoration
+            timelineSection.originalParent = timelineSection.parentNode;
+            timelineSection.originalNextSibling = timelineSection.nextSibling;
+            
+            // FIRST: Move timeline section directly to body to avoid inherited blur
+            document.body.appendChild(timelineSection);
+            
+            // SECOND: Move close button to body as well
+            document.body.appendChild(timelineCloseBtn);
+            
+            // THIRD: Create background overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'timeline-overlay';
+            overlay.id = 'timeline-overlay';
+            document.body.appendChild(overlay);
+            
+            // FOURTH: Now blur everything EXCEPT the timeline section, close button, and overlay
+            const allElements = document.querySelectorAll('body > *');
+            allElements.forEach(element => {
+                // Only blur elements that are NOT the timeline section, close button, or overlay
+                if (element.id !== 'timeline-section' && 
+                    element.id !== 'timeline-close-btn' && 
+                    element.id !== 'timeline-overlay') {
+                    element.classList.add('page-blurred');
+                }
+            });
+            
+            // FIFTH: Expand timeline section to fullscreen
+            timelineSection.classList.add('timeline-expanded');
+            
+            // Show close button
+            timelineCloseBtn.classList.remove('hidden');
+            
+            // Prevent body scrolling
+            document.body.style.overflow = 'hidden';
+            
+            // Animate in
+            requestAnimationFrame(() => {
+                overlay.classList.add('active');
+            });
+            
+            // Generate enhanced fullscreen timeline
+            generateInPlaceFullscreenTimeline();
+            
+            // Focus close button
+            const closeButton = timelineCloseBtn.querySelector('button');
+            closeButton.focus();
+            
+            showToast('Timeline expanded fullscreen', 'info');
+        }
+
+        function hideTimelineFullscreen() {
+            const timelineSection = document.getElementById('timeline-section');
+            const timelineCloseBtn = document.getElementById('timeline-close-btn');
+            const overlay = document.getElementById('timeline-overlay');
+            
+            // Animate out
+            if (overlay) overlay.classList.remove('active');
+            
+            setTimeout(() => {
+                // Remove fullscreen classes
+                timelineSection.classList.remove('timeline-expanded');
+                timelineCloseBtn.classList.add('hidden');
+                
+                // Restore timeline section to its original position
+                if (timelineSection.originalParent) {
+                    if (timelineSection.originalNextSibling) {
+                        timelineSection.originalParent.insertBefore(timelineSection, timelineSection.originalNextSibling);
+                    } else {
+                        timelineSection.originalParent.appendChild(timelineSection);
+                    }
+                    // Clean up stored references
+                    delete timelineSection.originalParent;
+                    delete timelineSection.originalNextSibling;
+                }
+                
+                // Restore close button to its original position (inside timeline section)
+                const timelineContainer = timelineSection.querySelector('#timeline-container');
+                if (timelineContainer) {
+                    timelineSection.appendChild(timelineCloseBtn);
+                }
+                
+                // Remove blur from ALL elements that were blurred
+                const blurredElements = document.querySelectorAll('.page-blurred');
+                blurredElements.forEach(element => {
+                    element.classList.remove('page-blurred');
+                });
+                
+                // Remove overlay
+                if (overlay && overlay.parentNode) {
+                    overlay.parentNode.removeChild(overlay);
+                }
+                
+                // Restore body scrolling
+                document.body.style.overflow = '';
+                
+                // Restore normal timeline
+                displayTimeline(currentData);
+            }, 300);
+        }
+
+        function generateInPlaceFullscreenTimeline() {
+            if (!currentData || !currentData.results) return;
+            
+            const validResults = currentData.results.filter(result => result && !result.error);
+            if (validResults.length === 0) return;
+            
+            elements.timelineContainer.innerHTML = '';
+            
+            // Find max time for scaling
+            let maxTime = 0;
+            validResults.forEach(result => {
+                if (result.total_duration > maxTime) {
+                    maxTime = result.total_duration;
+                }
+            });
+            
+            // Create enhanced fullscreen time scale
+            const scaleContainer = document.createElement('div');
+            scaleContainer.className = 'relative mb-8';
+            
+            // Enhanced time scale with more granular ticks for fullscreen
+            const scaleDiv = document.createElement('div');
+            scaleDiv.className = 'flex justify-between text-sm font-medium text-muted-foreground mb-3';
+            scaleDiv.style.marginLeft = 'calc(8rem + 2rem)'; // Larger labels in fullscreen
+            scaleDiv.style.marginRight = '0';
+            
+            // More time markers for better precision in fullscreen
+            for (let i = 0; i <= 20; i++) {
+                const time = (maxTime * i) / 20;
+                const span = document.createElement('span');
+                span.className = 'text-xs font-mono bg-background/80 px-2 py-1 rounded border';
+                span.textContent = formatTimestamp(time, true);
+                scaleDiv.appendChild(span);
+            }
+            scaleContainer.appendChild(scaleDiv);
+            
+            // Enhanced tick marks with more precision
+            const ticksDiv = document.createElement('div');
+            ticksDiv.className = 'relative h-4 bg-muted/20 rounded-lg border';
+            ticksDiv.style.marginLeft = 'calc(8rem + 2rem)';
+            ticksDiv.style.marginRight = '0';
+            
+            // Major ticks (every 5%)
+            for (let i = 0; i <= 20; i++) {
+                const tick = document.createElement('div');
+                tick.className = 'absolute w-1 h-full bg-muted-foreground/80 rounded-full';
+                tick.style.left = `${(i * 5)}%`;
+                tick.style.transform = 'translateX(-50%)';
+                ticksDiv.appendChild(tick);
+            }
+            
+            // Minor ticks (every 1%)
+            for (let i = 1; i <= 99; i++) {
+                if (i % 5 !== 0) { // Skip major tick positions
+                    const tick = document.createElement('div');
+                    tick.className = 'absolute w-0.5 h-2/3 bg-muted-foreground/40 top-1/6 rounded-full';
+                    tick.style.left = `${i}%`;
+                    tick.style.transform = 'translateX(-50%)';
+                    ticksDiv.appendChild(tick);
+                }
+            }
+            
+            scaleContainer.appendChild(ticksDiv);
+            elements.timelineContainer.appendChild(scaleContainer);
+            
+            // Create enhanced timeline rows with dynamic scaling
+            validResults.forEach((result, index) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center space-x-8 mb-8'; // Increased spacing for fullscreen
+                
+                const color = runColors[index % runColors.length];
+                
+                // Enhanced label with more space and better typography
+                const label = document.createElement('div');
+                label.className = 'w-32 text-base font-semibold text-right flex-shrink-0'; // Larger label area
+                label.innerHTML = `
+                    <div class="flex items-center justify-end space-x-3 bg-card/50 p-3 rounded-lg border">
+                        <div class="flex flex-col items-end">
+                            <span class="text-sm text-muted-foreground">Run ${index + 1}</span>
+                            <span class="font-bold">${result.title || `Run ${index + 1}`}</span>
+                        </div>
+                        <div class="w-4 h-4 rounded-full border-2 border-background" style="background-color: ${color}"></div>
+                    </div>
+                `;
+                
+                // Enhanced timeline bar with increased height and better visual hierarchy
+                const timelineBar = document.createElement('div');
+                timelineBar.className = 'flex-1 h-16 bg-muted/30 rounded-xl relative overflow-hidden border-2 border-muted/50'; // Much taller bars
+                
+                if (result.timeline_data) {
+                    // Enhanced segments with better spacing and typography
+                    result.timeline_data.forEach(segment => {
+                        const segmentDiv = document.createElement('div');
+                        const isTrash = !segment.is_boss;
+                        
+                        segmentDiv.className = 'timeline-segment absolute h-full flex items-center justify-center text-sm font-bold text-white overflow-hidden transition-all duration-200 hover:z-10 hover:scale-105 hover:shadow-lg cursor-pointer rounded-lg';
+                        segmentDiv.style.backgroundColor = isTrash ? '#64748b' : '#dc2626'; // Enhanced colors
+                        segmentDiv.style.border = '2px solid rgba(255, 255, 255, 0.2)';
+                        segmentDiv.setAttribute('role', 'button');
+                        segmentDiv.setAttribute('tabindex', '0');
+                        
+                        const leftPercent = (segment.start / maxTime) * 100;
+                        const widthPercent = ((segment.end - segment.start) / maxTime) * 100;
+                        
+                        segmentDiv.style.left = `${leftPercent}%`;
+                        segmentDiv.style.width = `${widthPercent}%`;
+                        segmentDiv.style.margin = '4px'; // Add margin for visual separation
+                        segmentDiv.style.height = 'calc(100% - 8px)'; // Account for margin
+                        
+                        // Enhanced label with better contrast and sizing
+                        const baseText = isTrash ? 'Trash' : segment.name;
+                        const displayText = isTrash ? 'Trash' : abbreviateBossName(segment.name);
+                        
+                        // Enhanced tooltip
+                        const duration = segment.end - segment.start;
+                        const timeRange = `${formatTimestamp(segment.start)} - ${formatTimestamp(segment.end)}`;
+                        segmentDiv.title = `${baseText}\nDuration: ${formatTimestamp(duration)}\nTime: ${timeRange}`;
+                        segmentDiv.setAttribute('aria-label', `${baseText}, duration ${formatTimestamp(duration)}, ${timeRange}`);
+                        
+                        // Enhanced text with better sizing logic for fullscreen
+                        const textSpan = document.createElement('span');
+                        textSpan.className = 'block w-full text-center font-bold overflow-hidden text-ellipsis whitespace-nowrap px-3';
+                        
+                        // Dynamic font sizing based on segment width
+                        const segmentWidth = (widthPercent / 100) * (window.innerWidth - 400); // Approximate available width
+                        let fontSize = 14;
+                        if (segmentWidth > 200) fontSize = 16;
+                        else if (segmentWidth > 120) fontSize = 14;
+                        else if (segmentWidth > 80) fontSize = 12;
+                        else if (segmentWidth > 50) fontSize = 10;
+                        else fontSize = 8;
+                        
+                        textSpan.style.fontSize = `${fontSize}px`;
+                        textSpan.style.lineHeight = '1.2';
+                        textSpan.textContent = displayText;
+                        
+                        // Add duration info for larger segments
+                        if (segmentWidth > 100) {
+                            const durationSpan = document.createElement('div');
+                            durationSpan.className = 'text-xs opacity-80 mt-1';
+                            durationSpan.textContent = formatTimestamp(duration, false);
+                            textSpan.appendChild(durationSpan);
+                        }
+                        
+                        segmentDiv.appendChild(textSpan);
+                        
+                        // Enhanced focus and hover effects
+                        segmentDiv.addEventListener('focus', () => {
+                            segmentDiv.style.outline = '3px solid hsl(var(--ring))';
+                            segmentDiv.style.outlineOffset = '2px';
+                            segmentDiv.style.zIndex = '20';
+                        });
+                        
+                        segmentDiv.addEventListener('blur', () => {
+                            segmentDiv.style.outline = 'none';
+                            segmentDiv.style.zIndex = '';
+                        });
+                        
+                        // Enhanced hover effect with info display
+                        segmentDiv.addEventListener('mouseenter', () => {
+                            segmentDiv.style.transform = 'scaleY(1.1)';
+                            segmentDiv.style.zIndex = '10';
+                            segmentDiv.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.4)';
+                        });
+                        
+                        segmentDiv.addEventListener('mouseleave', () => {
+                            segmentDiv.style.transform = '';
+                            segmentDiv.style.zIndex = '';
+                            segmentDiv.style.boxShadow = '';
+                        });
+                        
+                        timelineBar.appendChild(segmentDiv);
+                    });
+                }
+                
+                row.appendChild(label);
+                row.appendChild(timelineBar);
+                elements.timelineContainer.appendChild(row);
+            });
+            
+            // Re-initialize icons
+            lucide.createIcons();
+        }
+
         function loadSharedData() {
             const urlParams = new URLSearchParams(window.location.search);
             const sharedData = urlParams.get('data');
@@ -1597,8 +2015,21 @@
         elements.themeToggle.addEventListener('click', toggleTheme);
         elements.helpButton.addEventListener('click', showHelpModal);
         elements.helpModalClose.addEventListener('click', hideHelpModal);
+        elements.timelineFullscreenBtn.addEventListener('click', showTimelineFullscreen);
         elements.exportCsvBtn.addEventListener('click', exportToCsv);
         elements.shareBtn.addEventListener('click', shareResults);
+
+        // Add event listener for the in-place close button and overlay clicks
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('#timeline-close-btn button')) {
+                hideTimelineFullscreen();
+            }
+            
+            // Close fullscreen when clicking on the overlay
+            if (e.target.id === 'timeline-overlay') {
+                hideTimelineFullscreen();
+            }
+        });
 
         // Modal event listeners
         elements.helpModal.addEventListener('click', (e) => {
@@ -1609,8 +2040,12 @@
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
-            // Help modal shortcuts
-            if (elements.helpModal.classList.contains('hidden')) {
+            // Check if any modal is open or timeline is expanded
+            const helpModalOpen = !elements.helpModal.classList.contains('hidden');
+            const timelineExpanded = document.getElementById('timeline-section').classList.contains('timeline-expanded');
+            
+            if (!helpModalOpen && !timelineExpanded) {
+                // No modals open - normal shortcuts
                 if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
                     if (document.activeElement === elements.baseRunInput || 
                         document.activeElement?.classList.contains('run-url')) {
@@ -1636,11 +2071,17 @@
                             break;
                     }
                 }
-            } else {
+            } else if (helpModalOpen) {
                 // Help modal is open
                 if (e.key === 'Escape') {
                     e.preventDefault();
                     hideHelpModal();
+                }
+            } else if (timelineExpanded) {
+                // Timeline is expanded fullscreen
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    hideTimelineFullscreen();
                 }
             }
         });
@@ -1648,6 +2089,40 @@
         // Filter event listeners
         elements.bossFilter.addEventListener('change', applyFilters);
         elements.deltaFilter.addEventListener('change', applyFilters);
+
+        function updateDeltaDisplay() {
+            if (!currentData) return;
+            
+            // Default to showing both total and boss deltas
+            const deltaMode = 'both';
+            const rows = elements.resultsTbody.querySelectorAll('tr');
+            
+            rows.forEach(row => {
+                const deltaChips = row.querySelectorAll('[data-delta-chips]');
+                
+                deltaChips.forEach(chipsContainer => {
+                    const totalChips = chipsContainer.querySelectorAll('[data-delta-type="total"]');
+                    const bossChips = chipsContainer.querySelectorAll('[data-delta-type="boss"]');
+                    
+                    // Show both types of chips
+                    totalChips.forEach(chip => chip.style.display = 'inline-flex');
+                    bossChips.forEach(chip => chip.style.display = 'inline-flex');
+                });
+            });
+        }
+
+        function setupRowHoverBehavior() {
+            const rows = elements.resultsTbody.querySelectorAll('tr');
+            
+            rows.forEach(row => {
+                // Skip total row
+                const bossCell = row.querySelector('td:first-child');
+                if (!bossCell || bossCell.textContent.trim() === 'Total Run Time') return;
+                
+                // Make row focusable
+                row.setAttribute('tabindex', '0');
+            });
+        }
 
         function applyFilters() {
             if (!currentData) return;
@@ -1672,7 +2147,7 @@
                     shouldShow = false;
                 }
                 
-                // Delta filter
+                // Delta filter - check any significant delta
                 if (deltaFilter > 0 && !isTotalRow) {
                     const deltaElements = row.querySelectorAll('.delta-pill');
                     let hasSignificantDelta = false;
